@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(uuid())
+  username     String?      @unique
+  profilePic   String?
+  name         String
+  email        String       @unique
+  password     String?
+  createdAt    DateTime     @default(now())
+  lastLogin    DateTime?
+  rating       Int          @default(1200)
+  gamesAsWhite Game[]       @relation("whitePlayer")
+  gamesAsBlack Game[]       @relation("blackPlayer")
+  authProvider AuthProvider
+
+  @@index([rating])
+}
+
+model Game {
+  id            String      @id @default(uuid())
+  whitePlayerId String
+  blackPlayerId String
+  whitePlayer   User        @relation("whitePlayer", fields: [whitePlayerId], references: [id])
+  blackPlayer   User        @relation("blackPlayer", fields: [blackPlayerId], references: [id])
+  status        GameStatus
+  result        GameResult?
+  startingFen   String      @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+  currentFen    String?
+  startAt       DateTime    @default(now())
+  endAt         DateTime?
+  moves         Move[]
+  opening       String?
+  event         String?
+
+  @@index([status, result])
+}
+
+model Move {
+  id         String   @id @default(uuid())
+  gameId     String
+  game       Game     @relation(fields: [gameId], references: [id])
+  moveNumber Int
+  from       String
+  to         String
+  comments   String?
+  before     String
+  after      String
+  createdAt  DateTime @default(now())
+}
+
+enum GameStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  TIME_UP
+}
+
+enum GameResult {
+  WHITE_WINS
+  BLACK_WINS
+  DRAW
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+}
