@@ -2,18 +2,24 @@ import { useEffect, useState } from "react";
 import Button from "../components/Button";
 import ChessBoard from "../components/ChessBoard";
 import { useSocket } from "../hooks/useSocket";
-import { Chess } from "chess.js";
+import { Chess, Move } from "chess.js";
 import { toast } from "sonner";
 import useSound from "use-sound";
 import { useUser } from "@repo/store/useUser";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import PlayerLabel from "../components/PlayerLabel";
 
-export const INIT_GAME = "init_game";
-export const MOVE = "move";
-export const GAME_OVER = "game_over";
-export const ADDED_GAME = "added_game";
-export const GAME_ALERT = "game_alert";
+import {
+  ADDED_GAME,
+  GAME_ALERT,
+  GAME_OVER,
+  INIT_GAME,
+  JOIN_GAME,
+  MOVE,
+} from "@repo/utils/messages";
+import { useRecoilState } from "recoil";
+import { movesAtomState } from "@repo/store/chessBoard";
+import MovesTable from "../components/MovesTable";
 
 type gameMetaData = {
   blackPlayer: {
@@ -31,18 +37,20 @@ type gameMetaData = {
 const Game = () => {
   const user = useUser();
   const navigate = useNavigate();
+  const { roomId: gameId } = useParams();
   useEffect(() => {
     if (!user) {
       navigate("/login");
     }
   }, [user]);
-  const {token, ...currentPlayerData} = user ?? {};
+  const { token, ...currentPlayerData } = user ?? {};
   const socket = useSocket();
 
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
   const [gameData, setGameData] = useState<gameMetaData | null>(null);
   const [start, setStart] = useState<boolean>(false);
+  const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
   const [play] = useSound("/sounds/Chess-sounds.mp3", {
     sprite: {
       moveMade: [2181, 100],
@@ -81,8 +89,14 @@ const Game = () => {
           break;
         case MOVE:
           const move = message.payload.move;
-          chess.move({ from: move.from, to: move.to });
+          try {
+            console.log("inside make move");
+            chess.move(move);
+          } catch (error) {
+            console.log("Invalid move", error);
+          }
           setBoard(chess.board());
+          setAllMoves((oldMoves) => [...oldMoves, move]);
           break;
         case GAME_OVER:
           console.log("Game is over");
@@ -91,11 +105,33 @@ const Game = () => {
             description: result + " is the winner",
           });
           break;
+        case JOIN_GAME:
+          console.log("Joining existing game");
+          const { moves, blackPlayer, whitePlayer } = message.payload;
+          setGameData({
+            blackPlayer,
+            whitePlayer,
+          });
+          message.payload.moves.forEach((move: Move) => chess.move(move));
+          setAllMoves(moves);
+          setBoard(chess.board());
+          setStart(true);
+          break;
         default:
           console.log("Unknown message type");
           break;
       }
     };
+    if (gameId !== "start") {
+      socket.send(
+        JSON.stringify({
+          type: JOIN_GAME,
+          payload: {
+            gameId,
+          },
+        })
+      );
+    }
   }, [socket]);
 
   if (!socket) return <div>connecting...</div>;
@@ -103,7 +139,7 @@ const Game = () => {
   return (
     <div className="flex justify-center">
       <div className="pt-4 w-full max-w-screen-lg">
-        {start && gameData && (
+        {gameData && (
           <PlayerLabel
             PlayerData={
               user.id === gameData?.blackPlayer.id
@@ -124,8 +160,8 @@ const Game = () => {
               play={play}
             />
           </div>
-          <div className="col-span-2 bg-dark-secondary shadow-xl rounded-xl flex justify-center">
-            {!start && (
+          <div className="col-span-2 bg-stone-800 shadow-xl rounded-xl flex justify-center">
+            {!start ? (
               <div className="mt-4">
                 <Button
                   onClick={() => {
@@ -136,14 +172,12 @@ const Game = () => {
                   Play Game
                 </Button>
               </div>
+            ) : (
+              <MovesTable />
             )}
           </div>
         </div>
-        {
-          user && <PlayerLabel
-            PlayerData={currentPlayerData}
-          />
-        }
+        {user && <PlayerLabel PlayerData={currentPlayerData} />}
       </div>
     </div>
   );

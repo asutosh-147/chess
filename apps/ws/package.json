@@ -13,12 +13,14 @@
   "license": "ISC",
   "dependencies": {
     "@repo/db": "*",
+    "@repo/utils": "^1.0.0",
     "@types/ws": "^8.5.10",
     "chess.js": "^1.0.0-beta.8",
     "jsonwebtoken": "^9.0.2",
     "ws": "^8.16.0"
   },
   "devDependencies": {
+    "@babel/helper-compilation-targets": "^7.23.6",
     "@types/node": "^20.12.12",
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",

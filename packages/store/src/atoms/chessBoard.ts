@@ -5,7 +5,7 @@ export const isBoardFlipped = atom({
   default: false,
 });
 
-export const moves = atom<Move[]>({
+export const movesAtomState = atom<Move[]>({
   key:"movesHistoryAtom",
   default: [],
 })

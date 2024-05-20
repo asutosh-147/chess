@@ -1,6 +1,8 @@
 import { FaChessPawn } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
+
+
 const Landing = () => {
   const navigate = useNavigate();
   return (

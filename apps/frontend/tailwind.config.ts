@@ -17,6 +17,8 @@ export default {
         'dark-main':'#302e2b',
         'dark-secondary':'#615c57',
         'section-dark-bg':'#262522',
+        'whiteSquare-brown':'#edd6b0',
+        'blackSquare-brown':'#b88762',
       },
       width: {
         400: '400px',

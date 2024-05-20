@@ -10,7 +10,6 @@ const app = express();
 dotenv.config();
 
 const allowedHosts = process.env.HOSTS_ALLOWED? process.env.HOSTS_ALLOWED.split(',') : [];
-console.log(allowedHosts);
 app.use(cors({
     origin:allowedHosts,
     methods:'GET,POST,PUT,DELETE',

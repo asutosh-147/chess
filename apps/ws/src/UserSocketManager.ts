@@ -44,4 +44,17 @@ export class SocketManager {
     }
     users.forEach((user) => user.socket.send(message));
   }
+
+  broadCastMessageToOthers(roomId:string,userId:string,message:string){
+    const users = this.interestedInRoom.get(roomId);
+    if(!users){
+      console.error("No users in room");
+      return;
+    }
+    users.forEach((user) => {
+      if(user.userId !== userId){
+        user.socket.send(message);
+      }
+    })
+  }
 }

@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { Chess, Move } from "chess.js";
-import { GAME_OVER, INIT_GAME, MOVE } from "./messages";
+import { GAME_OVER, INIT_GAME, MOVE } from "@repo/utils/index";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { SocketManager, User } from "./UserSocketManager";
@@ -12,7 +12,7 @@ export class Game {
   public player2UserId: string | null;
   public board: Chess;
   private startTime: Date;
-  private moveCount: number;
+  public moveCount: number;
 
   constructor(
     p1UserId: string,
@@ -71,7 +71,7 @@ export class Game {
     //validation
     const { from, to } = move;
     console.log("inside make move");
-    console.log("board move number:", this.moveCount);
+    console.log("move count:", this.moveCount);
     if (this.moveCount % 2 === 0 && user.userId !== this.player1UserId) {
       console.log("player2 moved instead of player1");
       return;
@@ -101,8 +101,9 @@ export class Game {
       return;
     }
     // move made and broadcasted in the room
-    SocketManager.getInstance().broadcastMessage(
+    SocketManager.getInstance().broadCastMessageToOthers(
       this.gameId,
+      user.userId,
       JSON.stringify({
         type: MOVE,
         payload: {

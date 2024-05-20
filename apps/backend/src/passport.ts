@@ -40,7 +40,6 @@ export const initPassport = () => {
               authProvider: "GOOGLE",
             },
           });
-            console.log(user);
           done(null, user);
         }
       )
