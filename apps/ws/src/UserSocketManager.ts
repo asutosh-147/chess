@@ -33,7 +33,7 @@ export class SocketManager {
       ...(this.interestedInRoom.get(roomId) || []),
       user,
     ]);
-    this.userRoomMapping.set(user.id, roomId);
+    this.userRoomMapping.set(user.userId, roomId);
   }
 
   broadcastMessage(roomId: string, message: string) {
@@ -56,5 +56,24 @@ export class SocketManager {
         user.socket.send(message);
       }
     })
+  }
+  removeUser(userId: string) {
+    if(userId === ''){
+      console.log("Empty user id")
+      return;
+    }
+    const roomId = this.userRoomMapping.get(userId);
+    if (!roomId) {
+      console.error("No room found for user");
+      return;
+    }
+    const users = this.interestedInRoom.get(roomId) || [];
+    const remainingUsers = users.filter((user) => user.userId !== userId);
+    this.interestedInRoom.set(roomId,remainingUsers);
+    if(this.interestedInRoom.get(roomId)?.length === 0){
+      this.interestedInRoom.delete(roomId);
+    }
+    this.userRoomMapping.delete(userId);
+    console.log("User removed successfully")
   }
 }

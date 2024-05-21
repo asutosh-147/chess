@@ -1,12 +1,35 @@
-import { Color, Move, PieceSymbol, Square } from "chess.js";
+import { Chess, Color, Move, PieceSymbol, Square } from "chess.js";
 import { useEffect, useState } from "react";
 import { pieceMapping } from "../utils/pieceMapping";
 import { toast } from "sonner";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { isBoardFlipped, movesAtomState } from "@repo/store/chessBoard";
 import { useParams } from "react-router-dom";
-import { INIT_GAME, MOVE } from "@repo/utils/messages";
+import { MOVE } from "@repo/utils/messages";
+export function isPromoting(chess: Chess, from: Square, to: Square) {
+  if (!from) {
+    return false;
+  }
 
+  const piece = chess.get(from);
+
+  if (piece?.type !== "p") {
+    return false;
+  }
+
+  if (piece.color !== chess.turn()) {
+    return false;
+  }
+
+  if (!["1", "8"].some((it) => to.endsWith(it))) {
+    return false;
+  }
+
+  return chess
+    .history({ verbose: true })
+    .map((it) => it.to)
+    .includes(to);
+}
 type Props = {
   board: ({
     square: Square;
@@ -32,6 +55,7 @@ const ChessBoard = ({
   const { roomId: gameId } = useParams();
   const [from, setFrom] = useState<null | Square>(null);
   const [isFlipped, setIsFlipped] = useRecoilState(isBoardFlipped);
+  const [legalMoves, setLegalMoves] = useState<Square[]>([]);
   const isMyTurn = playerColor === chess.turn();
   const setAllMoves = useSetRecoilState(movesAtomState);
   useEffect(() => {
@@ -46,10 +70,18 @@ const ChessBoard = ({
     console.log(from, squareRep);
     try {
       let moveResult: Move;
-      moveResult = chess.move({
-        from,
-        to: squareRep,
-      });
+      if(isPromoting(chess, from, squareRep)){
+        moveResult = chess.move({
+          from,
+          to: squareRep,
+          promotion: "q",
+        });
+      }else{
+        moveResult = chess.move({
+          from,
+          to: squareRep,
+        });
+      }
       if (moveResult) {
         play({ id: "moveMade" });
         console.log("local move is made");
@@ -86,7 +118,9 @@ const ChessBoard = ({
                 <div
                   key={j}
                   className={` relative w-16 h-16 flex justify-center items-center ${
-                    (i + j) % 2 === 0 ? "bg-whiteSquare-brown" : "bg-blackSquare-brown"
+                    (i + j) % 2 === 0
+                      ? "bg-whiteSquare-brown"
+                      : "bg-blackSquare-brown"
                   }`}
                   onClick={() => {
                     if (!started) return;
@@ -98,6 +132,7 @@ const ChessBoard = ({
                       if (square) {
                         if (square.color === playerColor) {
                           setFrom(squareRep);
+                          // setLegalMoves(chess.moves({ square: squareRep }));
                         }
                       }
                     } else {
@@ -119,6 +154,9 @@ const ChessBoard = ({
                   ) : (
                     <></>
                   )}
+                  {/* {from && legalMoves.includes(squareRep) && (
+                    <div className="absolute bg-black opacity-50 size-5 rounded-full z-10 "></div>
+                  )} */}
                   {square ? (
                     <div>
                       {
@@ -130,7 +168,7 @@ const ChessBoard = ({
                                 square.color) as keyof typeof pieceMapping
                             ]
                           }
-                          alt={square.type + square.color}
+                          alt={square?.type + square?.color}
                         />
                       }
                     </div>

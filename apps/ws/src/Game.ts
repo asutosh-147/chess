@@ -1,11 +1,35 @@
 import { WebSocket } from "ws";
-import { Chess, Move } from "chess.js";
+import { Chess, Move, Square } from "chess.js";
 import { GAME_OVER, INIT_GAME, MOVE } from "@repo/utils/index";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { SocketManager, User } from "./UserSocketManager";
-type Result = "WHITE_WINS" | "BLACK_WINS" | "DRAW";
-type GameStatus = "IN_PROGRESS" | "COMPLETED" | "ABANDONED" | "TIME_UP";
+import { GameStatus, Result } from "@repo/utils/index";
+import { gameManager } from ".";
+export function isPromoting(chess: Chess, from: Square, to: Square) {
+  if (!from) {
+    return false;
+  }
+
+  const piece = chess.get(from);
+
+  if (piece?.type !== "p") {
+    return false;
+  }
+
+  if (piece.color !== chess.turn()) {
+    return false;
+  }
+
+  if (!["1", "8"].some((it) => to.endsWith(it))) {
+    return false;
+  }
+
+  return chess
+    .history({ verbose: true })
+    .map((it) => it.to)
+    .includes(to);
+}
 export class Game {
   public gameId: string;
   public player1UserId: string;
@@ -53,12 +77,14 @@ export class Game {
           roomId: this.gameId,
           whitePlayer: {
             name: users.find((user) => user.id === this.player1UserId)?.name,
-            profilePic: users.find((user) => user.id === this.player1UserId)?.profilePic,
+            profilePic: users.find((user) => user.id === this.player1UserId)
+              ?.profilePic,
             id: this.player1UserId,
           },
           blackPlayer: {
             name: users.find((user) => user.id === this.player2UserId)?.name,
-            profilePic: users.find((user) => user.id === this.player2UserId)?.profilePic,
+            profilePic: users.find((user) => user.id === this.player2UserId)
+              ?.profilePic,
             id: this.player2UserId,
           },
           fen: this.board.fen(),
@@ -83,10 +109,19 @@ export class Game {
     //make the move
     try {
       console.log("inside make move try block");
-      this.board.move({
-        from,
-        to,
-      });
+      if(isPromoting(this.board, from, to)){
+        console.log("promoting");
+        this.board.move({
+          from,
+          to,
+          promotion: "q",
+        }); 
+      }else{
+        this.board.move({
+          from,
+          to,
+        });
+      }
       console.log("move:", move, "moved");
     } catch (error) {
       console.log("error in making move", error);
@@ -111,6 +146,7 @@ export class Game {
         },
       })
     );
+    this.moveCount++;
     console.log("move broadcasted");
     //if game gets over
     if (this.board.isGameOver()) {
@@ -125,7 +161,6 @@ export class Game {
       return;
     }
 
-    this.moveCount++;
     console.log("move count:", this.moveCount);
   }
   async endGame(status: GameStatus, result: Result) {
@@ -156,6 +191,7 @@ export class Game {
         },
       })
     );
+    gameManager.removeGame(this.gameId);
   }
   async addMoveToDB(move: Move) {
     await db.$transaction([

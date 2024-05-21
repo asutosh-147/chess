@@ -16,10 +16,13 @@ import {
   INIT_GAME,
   JOIN_GAME,
   MOVE,
+  GameStatus,
+  Result
 } from "@repo/utils/messages";
 import { useRecoilState } from "recoil";
 import { movesAtomState } from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
+import GameEndModal from "../components/GameEndModal";
 
 type gameMetaData = {
   blackPlayer: {
@@ -33,7 +36,10 @@ type gameMetaData = {
     profilePic: string;
   };
 };
-
+type gameEndResult = {
+  result: Result;
+  status: GameStatus;
+};
 const Game = () => {
   const user = useUser();
   const navigate = useNavigate();
@@ -49,6 +55,7 @@ const Game = () => {
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
   const [gameData, setGameData] = useState<gameMetaData | null>(null);
+  const [gameResult, setGameResult] = useState<gameEndResult | null>(null);
   const [start, setStart] = useState<boolean>(false);
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
   const [play] = useSound("/sounds/Chess-sounds.mp3", {
@@ -101,6 +108,8 @@ const Game = () => {
         case GAME_OVER:
           console.log("Game is over");
           const { result, status } = message.payload;
+          setGameResult({ result, status });
+          console.log(gameResult);
           toast.info(`Game is ${status}`, {
             description: result + " is the winner",
           });
@@ -108,11 +117,20 @@ const Game = () => {
         case JOIN_GAME:
           console.log("Joining existing game");
           const { moves, blackPlayer, whitePlayer } = message.payload;
+          if(gameId !==message.payload.gameId){
+            navigate(`/play/${message.payload.gameId}`);
+          }
           setGameData({
             blackPlayer,
             whitePlayer,
           });
           message.payload.moves.forEach((move: Move) => chess.move(move));
+          if(message.payload?.result && message.payload?.status==="COMPLETED"){
+            setGameResult({
+              result: message.payload.result,
+              status: message.payload.status,
+            });
+          }
           setAllMoves(moves);
           setBoard(chess.board());
           setStart(true);
@@ -132,12 +150,19 @@ const Game = () => {
         })
       );
     }
+    return()=>{
+      setAllMoves([]);
+    }
   }, [socket]);
 
   if (!socket) return <div>connecting...</div>;
 
   return (
     <div className="flex justify-center">
+      {
+        gameData && gameResult &&
+        <GameEndModal gameData={gameData!} gameResult={gameResult!}/>
+      }
       <div className="pt-4 w-full max-w-screen-lg">
         {gameData && (
           <PlayerLabel
@@ -160,16 +185,16 @@ const Game = () => {
               play={play}
             />
           </div>
-          <div className="col-span-2 bg-stone-800 shadow-xl rounded-xl flex justify-center">
+          <div className="col-span-2 bg-stone-800 shadow-xl rounded-xl flex justify-center w-400">
             {!start ? (
               <div className="mt-4">
                 <Button
                   onClick={() => {
                     socket.send(JSON.stringify({ type: INIT_GAME }));
                   }}
-                  fontWeight="semi-bold"
+                  fontWeight="semibold"
                 >
-                  Play Game
+                  Play Random
                 </Button>
               </div>
             ) : (
@@ -177,7 +202,7 @@ const Game = () => {
             )}
           </div>
         </div>
-        {user && <PlayerLabel PlayerData={currentPlayerData} />}
+        {user && <PlayerLabel PlayerData={user}/>}
       </div>
     </div>
   );

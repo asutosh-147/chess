@@ -19,7 +19,7 @@ const MovesTable = () => {
         </div>
         <div
           ref={scrollRef}
-          className="overflow-y-scroll scroll-smooth scrollbar-custom h-[550px] rounded-br-lg"
+          className="overflow-y-scroll scroll-smooth scrollbar-custom h-[30rem] rounded-br-lg"
         >
           {allMoves.map((move, index, arr) => (
             <div

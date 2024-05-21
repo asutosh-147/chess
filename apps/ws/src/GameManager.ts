@@ -24,17 +24,40 @@ export class GameManager {
     this.addHandler(user);
   }
   removeUser(socket: WebSocket) {
+    const user = this.users.find((user) => user.socket === socket);
+    if (!user) {
+      console.error("User not found?");
+      return;
+    }
     this.users.filter((user) => user.socket !== socket);
+
+    if (this.pendingGameId === user.userId) {
+      this.pendingGameId = null;
+    }
+    SocketManager.getInstance().removeUser(user.userId);
   }
 
-  removeGame(game: Game) {
-    this.games = this.games.filter((g) => g.gameId !== game.gameId);
+  removeGame(gameId: string) {
+    const game = this.games.find((game) => game.gameId === gameId);
+    if (!game) {
+      console.error("Game not found?");
+      return;
+    }
+    this.games = this.games.filter((game) => game.gameId !== gameId);
+    SocketManager.getInstance().removeUser(game.player1UserId);
+    SocketManager.getInstance().removeUser(game.player2UserId ?? "");
+    console.log("game removed successfully");
   }
   private addHandler(user: User) {
     const socket = user.socket;
     socket.on("message", async (data) => {
       const message = JSON.parse(data.toString());
       if (message.type === INIT_GAME) {
+        const availableGame = this.games.find( (game) => game.player1UserId === user.userId || game.player2UserId === user.userId);
+        if(availableGame){
+            this.joinGame(availableGame.gameId, user);
+            return;
+        }
         if (this.pendingGameId) {
           const game = this.games.find(
             (game) => game.gameId === this.pendingGameId
@@ -87,8 +110,14 @@ export class GameManager {
 
       if (message.type === JOIN_GAME) {
         const { gameId } = message.payload;
-        console.log("join game req initialised")
-        const availableGame = this.games.find((game) => game.gameId === gameId);
+        console.log("join game req initialised");
+        this.joinGame(gameId, user);
+      }
+    });
+  }
+  private async joinGame(gameId: string, user: User) {
+    const socket = user.socket;
+    const availableGame = this.games.find((game) => game.gameId === gameId);
         const gameInDb = await db.game.findUnique({
           where: {
             id: gameId,
@@ -114,13 +143,17 @@ export class GameManager {
           );
           return;
         }
-        if (!availableGame) {
-          const game = new Game(gameInDb.whitePlayerId,gameInDb.blackPlayerId, gameId);
-          gameInDb.moves.forEach((move)=>game.board.move(move));
+        if (!availableGame && gameInDb.status === "IN_PROGRESS") {
+          const game = new Game(
+            gameInDb.whitePlayerId,
+            gameInDb.blackPlayerId,
+            gameId
+          );
+          gameInDb.moves.forEach((move) => game.board.move(move));
           game.moveCount = gameInDb.moves.length;
           this.games.push(game);
         }
-        
+
         SocketManager.getInstance().addUserToMapping(gameId, user);
         socket.send(
           JSON.stringify({
@@ -128,12 +161,12 @@ export class GameManager {
             payload: {
               gameId,
               moves: gameInDb.moves,
+              result: gameInDb.result,
+              status: gameInDb.status,
               blackPlayer: gameInDb.blackPlayer,
               whitePlayer: gameInDb.whitePlayer,
             },
           })
         );
-      }
-    });
   }
 }

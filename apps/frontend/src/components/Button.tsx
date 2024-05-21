@@ -3,7 +3,7 @@ type Props = {
   children: React.ReactNode;
   fontWeight: string;
 };
-const Button = ({ onClick, children, fontWeight }: Props) => {
+const Button = ({ onClick, children, fontWeight="normal" }: Props) => {
   return (
     <button
       onClick={onClick}
