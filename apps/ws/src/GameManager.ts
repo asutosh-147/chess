@@ -53,10 +53,14 @@ export class GameManager {
     socket.on("message", async (data) => {
       const message = JSON.parse(data.toString());
       if (message.type === INIT_GAME) {
-        const availableGame = this.games.find( (game) => game.player1UserId === user.userId || game.player2UserId === user.userId);
-        if(availableGame){
-            this.joinGame(availableGame.gameId, user);
-            return;
+        const availableGame = this.games.find(
+          (game) =>
+            game.player1UserId === user.userId ||
+            game.player2UserId === user.userId
+        );
+        if (availableGame) {
+          this.joinGame(availableGame.gameId, user);
+          return;
         }
         if (this.pendingGameId) {
           const game = this.games.find(
@@ -96,10 +100,13 @@ export class GameManager {
       }
 
       if (message.type === MOVE) {
+        // const game = this.games.find(
+        //   (game) =>
+        //     game.player1UserId === user.userId ||
+        //     game.player2UserId === user.userId
+        // );
         const game = this.games.find(
-          (game) =>
-            game.player1UserId === user.userId ||
-            game.player2UserId === user.userId
+          (game) => game.gameId === message.payload.gameId
         );
         if (!game) {
           console.error("Game not found");
@@ -117,56 +124,72 @@ export class GameManager {
   }
   private async joinGame(gameId: string, user: User) {
     const socket = user.socket;
-    const availableGame = this.games.find((game) => game.gameId === gameId);
-        const gameInDb = await db.game.findUnique({
-          where: {
-            id: gameId,
+    SocketManager.getInstance().addUserToMapping(gameId, user);
+    let availableGame = this.games.find((game) => game.gameId === gameId);
+    if (
+      availableGame &&
+      availableGame.player1UserId === user.userId &&
+      availableGame.player2UserId === null
+    ) {
+      console.log("game already in queue")
+      user.socket.send(
+        JSON.stringify({
+          type: GAME_ALERT,
+          payload: {
+            message: "already in queue",
           },
-          include: {
-            moves: {
-              orderBy: {
-                moveNumber: "asc",
-              },
-            },
-            blackPlayer: true,
-            whitePlayer: true,
+        })
+      );
+      return;
+    }
+    const gameInDb = await db.game.findUnique({
+      where: {
+        id: gameId,
+      },
+      include: {
+        moves: {
+          orderBy: {
+            moveNumber: "asc",
           },
-        });
-        if (!gameInDb) {
-          socket.send(
-            JSON.stringify({
-              type: GAME_ALERT,
-              payload: {
-                message: "Game not found",
-              },
-            })
-          );
-          return;
-        }
-        if (!availableGame && gameInDb.status === "IN_PROGRESS") {
-          const game = new Game(
-            gameInDb.whitePlayerId,
-            gameInDb.blackPlayerId,
-            gameId
-          );
-          gameInDb.moves.forEach((move) => game.board.move(move));
-          game.moveCount = gameInDb.moves.length;
-          this.games.push(game);
-        }
+        },
+        blackPlayer: true,
+        whitePlayer: true,
+      },
+    });
+    if (!gameInDb) {
+      socket.send(
+        JSON.stringify({
+          type: GAME_ALERT,
+          payload: {
+            message: "Game not found",
+          },
+        })
+      );
+      return;
+    }
+    if (!availableGame && gameInDb.status === "IN_PROGRESS") {
+      const game = new Game(
+        gameInDb.whitePlayerId,
+        gameInDb.blackPlayerId,
+        gameId
+      );
+      game.seedAllMoves(gameInDb.moves);
+      this.games.push(game);
+      availableGame = game;
+    }
 
-        SocketManager.getInstance().addUserToMapping(gameId, user);
-        socket.send(
-          JSON.stringify({
-            type: JOIN_GAME,
-            payload: {
-              gameId,
-              moves: gameInDb.moves,
-              result: gameInDb.result,
-              status: gameInDb.status,
-              blackPlayer: gameInDb.blackPlayer,
-              whitePlayer: gameInDb.whitePlayer,
-            },
-          })
-        );
+    socket.send(
+      JSON.stringify({
+        type: JOIN_GAME,
+        payload: {
+          gameId,
+          moves: gameInDb.moves,
+          result: gameInDb.result,
+          status: gameInDb.status,
+          blackPlayer: gameInDb.blackPlayer,
+          whitePlayer: gameInDb.whitePlayer,
+        },
+      })
+    );
   }
 }

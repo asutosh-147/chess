@@ -20,7 +20,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "use-sound": ["./generated-types/"]
+      "use-sound": ["./generated-types/"],
+      "@/*":["./src/*"],
     }
   },
   "include": ["src"],

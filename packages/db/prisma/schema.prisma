@@ -54,6 +54,10 @@ model Move {
   gameId     String
   game       Game     @relation(fields: [gameId], references: [id])
   moveNumber Int
+  captured   String?
+  promotion  String?
+  piece      String
+  color      String
   from       String
   to         String
   comments   String?

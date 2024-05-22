@@ -7,9 +7,10 @@ import { RecoilRoot } from "recoil";
 import Loader from "./components/Loader/Loader";
 import { Suspense } from "react";
 import Login from "./pages/Login";
+import Layout from "./components/layout";
 const App = () => {
   return (
-    <div className="h-screen p-2 text-white relative">
+    <div className="text-white">
       <RecoilRoot>
         <Suspense fallback={<Loader />}>
           <AuthApp />
@@ -26,9 +27,9 @@ const AuthApp = () => {
     <BrowserRouter>
       <Toaster richColors />
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<Layout children={<Landing />} />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/play/:roomId" element={<Game />} />
+        <Route path="/play/:roomId" element={<Layout children={<Game />}/>} />
       </Routes>
     </BrowserRouter>
   );

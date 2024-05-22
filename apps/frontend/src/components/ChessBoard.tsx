@@ -12,7 +12,6 @@ export function isPromoting(chess: Chess, from: Square, to: Square) {
   }
 
   const piece = chess.get(from);
-
   if (piece?.type !== "p") {
     return false;
   }
@@ -26,7 +25,7 @@ export function isPromoting(chess: Chess, from: Square, to: Square) {
   }
 
   return chess
-    .history({ verbose: true })
+    .moves({ square: from, verbose: true })
     .map((it) => it.to)
     .includes(to);
 }
@@ -56,8 +55,11 @@ const ChessBoard = ({
   const [from, setFrom] = useState<null | Square>(null);
   const [isFlipped, setIsFlipped] = useRecoilState(isBoardFlipped);
   const [legalMoves, setLegalMoves] = useState<Square[]>([]);
+  const [lastMove, setLastMove] = useState<null | { from: string; to: string }>(
+    null
+  );
   const isMyTurn = playerColor === chess.turn();
-  const setAllMoves = useSetRecoilState(movesAtomState);
+  const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
   useEffect(() => {
     if (playerColor === "b") {
       setIsFlipped(true);
@@ -65,18 +67,29 @@ const ChessBoard = ({
       setIsFlipped(false);
     }
   }, [playerColor]);
+  useEffect(() => {
+    const lastM = allMoves.at(-1);
+    if (lastM) {
+      setLastMove({ from: lastM.from, to: lastM.to });
+    } else {
+      setLastMove(null);
+    }
+  }, [allMoves]);
 
   const handleMakeMove = (from: Square, squareRep: Square) => {
     console.log(from, squareRep);
     try {
+      console.log("trying to make move");
       let moveResult: Move;
-      if(isPromoting(chess, from, squareRep)){
+      if (isPromoting(chess, from, squareRep)) {
+        console.log("promoting");
         moveResult = chess.move({
           from,
           to: squareRep,
           promotion: "q",
         });
-      }else{
+      } else {
+        console.log("not promoting");
         moveResult = chess.move({
           from,
           to: squareRep,
@@ -95,6 +108,7 @@ const ChessBoard = ({
           })
         );
         setAllMoves((prevMoves) => [...prevMoves, moveResult]);
+        setLegalMoves([]);
         setBoard(chess.board());
         setFrom(null);
       }
@@ -114,25 +128,48 @@ const ChessBoard = ({
             {(isFlipped ? [...row].reverse() : row).map((square, j) => {
               j = isFlipped ? 7 - j : j;
               const squareRep = (String.fromCharCode(97 + j) + i) as Square;
+              const isHighlighted =
+                from === squareRep ||
+                lastMove?.from === squareRep ||
+                lastMove?.to === squareRep;
+              const isKingInCheckSquare =
+                square?.type === "k" &&
+                square?.color === chess.turn() &&
+                chess.inCheck();
+              const whiteBox = (i + j) % 2 === 0;
               return (
                 <div
                   key={j}
                   className={` relative w-16 h-16 flex justify-center items-center ${
-                    (i + j) % 2 === 0
-                      ? "bg-whiteSquare-brown"
-                      : "bg-blackSquare-brown"
-                  }`}
+                    isKingInCheckSquare
+                      ? "bg-[#FF6347]"
+                      : isHighlighted
+                        ? whiteBox
+                          ? "bg-[#f6eb72]"
+                          : "bg-[#dcc34b]"
+                        : whiteBox
+                          ? "bg-tan-main"
+                          : "bg-green-main"
+                  } `}
                   onClick={() => {
                     if (!started) return;
                     if (!isMyTurn) return;
                     if (!square && from === null) return;
                     if (!from && square?.color !== chess.turn()) return;
-
+                    if(from && from === squareRep){
+                      setFrom(null);
+                      setLegalMoves([]);
+                      return;
+                    }
                     if (!from) {
                       if (square) {
                         if (square.color === playerColor) {
                           setFrom(squareRep);
-                          // setLegalMoves(chess.moves({ square: squareRep }));
+                          setLegalMoves(
+                            chess
+                              .moves({ square: square.square, verbose: true })
+                              .map((move: Move) => move.to)
+                          );
                         }
                       }
                     } else {
@@ -154,9 +191,7 @@ const ChessBoard = ({
                   ) : (
                     <></>
                   )}
-                  {/* {from && legalMoves.includes(squareRep) && (
-                    <div className="absolute bg-black opacity-50 size-5 rounded-full z-10 "></div>
-                  )} */}
+
                   {square ? (
                     <div>
                       {
@@ -174,6 +209,9 @@ const ChessBoard = ({
                     </div>
                   ) : (
                     ""
+                  )}
+                  {from && legalMoves.includes(squareRep) && (
+                    <div className="absolute bg-black opacity-20 size-5 rounded-full z-[1] "></div>
                   )}
                 </div>
               );

@@ -25,10 +25,10 @@ export function isPromoting(chess: Chess, from: Square, to: Square) {
     return false;
   }
 
-  return chess
-    .history({ verbose: true })
-    .map((it) => it.to)
-    .includes(to);
+  return  chess
+  .moves({ square: from, verbose: true })
+  .map((it) => it.to)
+  .includes(to);
 }
 export class Game {
   public gameId: string;
@@ -93,6 +93,38 @@ export class Game {
     );
   }
 
+  seedAllMoves(
+    moves: {
+      id: string;
+      gameId: string;
+      moveNumber: number;
+      from: string;
+      to: string;
+      comments: string | null;
+      createdAt: Date;
+      piece: string;
+      color: string;
+      captured: string | null;
+      promotion: string | null;
+    }[]
+  ) {
+    moves.forEach((move)=>{
+      if(isPromoting(this.board, move.from as Square,move.to as Square)){
+        this.board.move({
+          from:move.from,
+          to:move.to,
+          promotion:"q"
+        });
+      }else{
+        this.board.move({
+          from:move.from,
+          to:move.to
+        });
+      }
+    })
+    this.moveCount = moves.length;
+  }
+
   async makeMove(user: User, move: Move) {
     //validation
     const { from, to } = move;
@@ -109,14 +141,14 @@ export class Game {
     //make the move
     try {
       console.log("inside make move try block");
-      if(isPromoting(this.board, from, to)){
+      if (isPromoting(this.board, from, to)) {
         console.log("promoting");
         this.board.move({
           from,
           to,
           promotion: "q",
-        }); 
-      }else{
+        });
+      } else {
         this.board.move({
           from,
           to,
@@ -201,6 +233,10 @@ export class Game {
           to: move.to,
           after: move.after,
           before: move.before,
+          color: move.color,
+          piece: move.piece,
+          captured: move?.captured,
+          promotion: move?.promotion,
           game: {
             connect: {
               id: this.gameId,

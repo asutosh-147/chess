@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import Button from "../components/Button";
-import ChessBoard from "../components/ChessBoard";
+import Button from "../components/ui/Button";
+import ChessBoard, { isPromoting } from "../components/ChessBoard";
 import { useSocket } from "../hooks/useSocket";
 import { Chess, Move } from "chess.js";
 import { toast } from "sonner";
@@ -17,12 +17,13 @@ import {
   JOIN_GAME,
   MOVE,
   GameStatus,
-  Result
+  Result,
 } from "@repo/utils/messages";
 import { useRecoilState } from "recoil";
 import { movesAtomState } from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
 import GameEndModal from "../components/GameEndModal";
+import Confetti from "@/components/Confetti";
 
 type gameMetaData = {
   blackPlayer: {
@@ -78,6 +79,7 @@ const Game = () => {
           });
           break;
         case GAME_ALERT:
+          console.log(message.payload.message);
           toast.error("Game Alert", {
             description: message.payload.message,
           });
@@ -117,15 +119,28 @@ const Game = () => {
         case JOIN_GAME:
           console.log("Joining existing game");
           const { moves, blackPlayer, whitePlayer } = message.payload;
-          if(gameId !==message.payload.gameId){
+          if (gameId !== message.payload.gameId) {
             navigate(`/play/${message.payload.gameId}`);
           }
           setGameData({
             blackPlayer,
             whitePlayer,
           });
-          message.payload.moves.forEach((move: Move) => chess.move(move));
-          if(message.payload?.result && message.payload?.status==="COMPLETED"){
+          message.payload.moves.forEach((move: Move) => {
+            if (isPromoting(chess, move.from, move.to)) {
+              chess.move({
+                from: move.from,
+                to: move.to,
+                promotion: "q",
+              });
+            } else {
+              chess.move(move);
+            }
+          });
+          if (
+            message.payload?.result &&
+            message.payload?.status === "COMPLETED"
+          ) {
             setGameResult({
               result: message.payload.result,
               status: message.payload.status,
@@ -150,9 +165,9 @@ const Game = () => {
         })
       );
     }
-    return()=>{
+    return () => {
       setAllMoves([]);
-    }
+    };
   }, [socket]);
 
   if (!socket) return <div>connecting...</div>;
@@ -160,9 +175,11 @@ const Game = () => {
   return (
     <div className="flex justify-center">
       {
-        gameData && gameResult &&
-        <GameEndModal gameData={gameData!} gameResult={gameResult!}/>
+        gameResult && gameResult.status === "COMPLETED" && gameResult.result !== "DRAW" && <Confetti/>
       }
+      {gameData && gameResult && (
+        <GameEndModal gameData={gameData!} gameResult={gameResult!} />
+      )}
       <div className="pt-4 w-full max-w-screen-lg">
         {gameData && (
           <PlayerLabel
@@ -185,14 +202,14 @@ const Game = () => {
               play={play}
             />
           </div>
-          <div className="col-span-2 bg-stone-800 shadow-xl rounded-xl flex justify-center w-400">
+          <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl flex justify-center w-400">
             {!start ? (
               <div className="mt-4">
                 <Button
                   onClick={() => {
                     socket.send(JSON.stringify({ type: INIT_GAME }));
                   }}
-                  fontWeight="semibold"
+                  className="font-semibold"
                 >
                   Play Random
                 </Button>
@@ -202,7 +219,7 @@ const Game = () => {
             )}
           </div>
         </div>
-        {user && <PlayerLabel PlayerData={user}/>}
+        {user && <PlayerLabel PlayerData={user} />}
       </div>
     </div>
   );

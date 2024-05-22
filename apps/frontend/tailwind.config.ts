@@ -11,7 +11,8 @@ export default {
         'tan-300':'#ebecd0',
         'tan-500':'#858576',
         'tan-main':'#e8e9ce',
-        'green-main':'#739552'
+        'green-main':'#739552',
+        'brown-main':'#ddb085'
       },
       backgroundColor:{
         'dark-main':'#302e2b',

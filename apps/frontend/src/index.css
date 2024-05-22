@@ -47,7 +47,7 @@
     }
 
     body {
-        @apply bg-dark-main;
+        @apply bg-stone-800;
     }
 }
 

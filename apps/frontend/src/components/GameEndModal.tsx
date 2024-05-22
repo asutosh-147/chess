@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Button from "./Button";
+import Button from "./ui/Button";
 import { useNavigate } from "react-router-dom";
 import { FaChessQueen } from "react-icons/fa";
 import { Result, GameStatus } from "@repo/utils/messages";
@@ -32,18 +32,18 @@ const GameEndModal = ({ gameData, gameResult }: Props) => {
   const handleClose = () => {
     setIsOpen(false);
   };
-  useEffect(() => {
-    if(isOpen){
-      document.body.classList.add("modal-open");
-    }
-    return () => {
-      document.body.classList.remove("modal-open");
-    };
-  }, []);
+  // useEffect(() => {
+  //   if(isOpen){
+  //     document.body.classList.add("modal-open");
+  //   }
+  //   return () => {
+  //     document.body.classList.remove("modal-open");
+  //   };
+  // }, []);
   return (
     <>
       {isOpen && (
-        <div className="h-screen w-full fixed z-[1] bg-black bg-opacity-40 flex flex-col justify-center m-0 p-0">
+        <div className="fixed z-[1] bg-black bg-opacity-40 flex flex-col justify-center h-screen w-full ">
           <div className="bg-stone-900 rounded-lg shadow-2xl flex flex-col items-center p-6 w-96 h-72 gap-5 mx-auto relative">
             <button
               onClick={handleClose}
@@ -93,7 +93,7 @@ const GameEndModal = ({ gameData, gameResult }: Props) => {
                 </div>
               </div>
             </div>
-            <Button onClick={handleCLick} fontWeight="bold">
+            <Button className="font-bold" onClick={handleCLick} >
               New Game
             </Button>
           </div>
