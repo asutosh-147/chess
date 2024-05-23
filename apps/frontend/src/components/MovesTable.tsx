@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { useRecoilState } from "recoil";
 import "../index.css";
 import { Move } from "chess.js";
-import { iconPieceMapping } from "@/utils/pieceMapping";
+import { iconPieceMapping, pieceMapping } from "@/utils/pieceMapping";
 const MovesTable = () => {
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
   const movePairs: Move[][] = allMoves.reduce((acc, move, index, arr) => {
@@ -44,11 +44,20 @@ const MovesTable = () => {
                       return (
                         <span key={pairIndex} className="w-12 text-left">
                           <span
-                            className={`p-1 flex items-center gap-1 ${isLastMoveMade ? "bg-white bg-opacity-15 rounded-md border-b-2" : ""}`}
+                            className={`p-1 flex justify-center items-center gap-1 ${isLastMoveMade ? "bg-white bg-opacity-15 rounded-md border-b-2" : ""}`}
                           >
                             <span className="text-sm">
                               {
-                                iconPieceMapping[move.piece.toLowerCase() as keyof typeof iconPieceMapping]
+                                <img
+                                className="size-4"
+                                  src={
+                                    pieceMapping[
+                                      (move.piece +
+                                        "w") as keyof typeof pieceMapping
+                                    ]
+                                  }
+                                  alt=""
+                                />
                               }
                             </span>
                             {move.to}

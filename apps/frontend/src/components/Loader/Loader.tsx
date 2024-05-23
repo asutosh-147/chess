@@ -4,7 +4,7 @@ type Props = {};
 
 const Loader = (props: Props) => {
   return (
-    <div className="anim-container absolute">
+    <div className="anim-container">
 
   <div className="h1Container">
 

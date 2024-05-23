@@ -50,9 +50,8 @@ authRouter.get('/logout',(req:Request,res:Response)=>{
             return res.status(500).json({message:'Logout failed'});
         }else{
             res.clearCookie('session');
-            res.redirect('http://localhost:5173/');
+            res.redirect("http://localhost:5173/");
         }
     });
-    res.json({message:'Logged out'});
 })
 export default authRouter;

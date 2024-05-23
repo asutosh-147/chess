@@ -5,7 +5,9 @@
   "main": "index.js",
   "exports":{
     "./useUser":"./src/hooks/useUser.ts",
-    "./chessBoard":"./src/atoms/chessBoard.ts"
+    "./chessBoard":"./src/atoms/chessBoard.ts",
+    "./user":"./src/atoms/user.ts",
+    "./theme":"./src/atoms/theme.ts"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

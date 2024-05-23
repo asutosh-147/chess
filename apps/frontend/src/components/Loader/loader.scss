@@ -6,16 +6,16 @@ $scale: 0.5;
 $duration: 3s;
 $timingFunction: ease;
 
-// animation-body {
-//   display:flex;
-//   justify-content:center;
-//   align-items:center;
-//   height:100vh;
-//   width:100vw;
-//   margin:0;
-//   padding:0;
-//   background:$background;
-// }
+animation-body {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  width:100vw;
+  margin:0;
+  padding:0;
+  background:$background;
+}
 
 .anim-container {
   position:relative;

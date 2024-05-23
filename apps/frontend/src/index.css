@@ -3,6 +3,7 @@
 .modal-open {
     overflow: hidden;
 }
+
 .scrollbar-hide {
     scrollbar-width: none;
     /* For Firefox */
@@ -36,8 +37,9 @@
     .piece {
         @apply text-4xl;
     }
-    .profilePic-game{
-        @apply  size-16 rounded-md shadow-md border-green-100 border-4;
+
+    .profilePic-game {
+        @apply size-16 rounded-md shadow-md border-green-100 border-4;
     }
 }
 
@@ -50,6 +52,7 @@
         @apply bg-stone-800;
     }
 }
+
 
 
 @tailwind base;

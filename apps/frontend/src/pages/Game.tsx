@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Button from "../components/ui/Button";
 import ChessBoard, { isPromoting } from "../components/ChessBoard";
 import { useSocket } from "../hooks/useSocket";
-import { Chess, Move } from "chess.js";
+import { Chess, Move, PieceSymbol } from "chess.js";
 import { toast } from "sonner";
 import useSound from "use-sound";
 import { useUser } from "@repo/store/useUser";
@@ -24,6 +24,7 @@ import { movesAtomState } from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
 import GameEndModal from "../components/GameEndModal";
 import Confetti from "@/components/Confetti";
+import Loader from "@/components/Loader/Loader";
 
 type gameMetaData = {
   blackPlayer: {
@@ -52,7 +53,6 @@ const Game = () => {
   }, [user]);
   const { token, ...currentPlayerData } = user ?? {};
   const socket = useSocket();
-
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
   const [gameData, setGameData] = useState<gameMetaData | null>(null);
@@ -170,13 +170,18 @@ const Game = () => {
     };
   }, [socket]);
 
-  if (!socket) return <div>connecting...</div>;
+  if (!socket)
+    return (
+      <div>
+        <Loader />
+      </div>
+    );
 
   return (
     <div className="flex justify-center">
-      {
-        gameResult && gameResult.status === "COMPLETED" && gameResult.result !== "DRAW" && <Confetti/>
-      }
+      {gameResult &&
+        gameResult.status === "COMPLETED" &&
+        gameResult.result !== "DRAW" && <Confetti />}
       {gameData && gameResult && (
         <GameEndModal gameData={gameData!} gameResult={gameResult!} />
       )}
@@ -188,6 +193,7 @@ const Game = () => {
                 ? gameData.whitePlayer
                 : gameData.blackPlayer
             }
+            playerColor={user?.id === gameData?.blackPlayer.id ? "w" : "b"}
           />
         )}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
@@ -219,7 +225,9 @@ const Game = () => {
             )}
           </div>
         </div>
-        {user && <PlayerLabel PlayerData={user} />}
+        {gameData && <PlayerLabel PlayerData={ user.id === gameData?.blackPlayer.id
+                ? gameData.blackPlayer
+                : gameData.whitePlayer } playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"} />}
       </div>
     </div>
   );

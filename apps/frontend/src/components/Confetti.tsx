@@ -9,7 +9,7 @@ export default () => {
         <Confetti
           width={width}
           height={height}
-          wind={0.01}
+          wind={0.02}
           gravity={0.1}
         />
     </div>

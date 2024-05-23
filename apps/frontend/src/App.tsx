@@ -3,14 +3,15 @@ import Landing from "./pages/Landing";
 import Game from "./pages/Game";
 import { Toaster } from "sonner";
 import { useUser } from "@repo/store/useUser";
-import { RecoilRoot } from "recoil";
+import { RecoilRoot, useRecoilValue } from "recoil";
 import Loader from "./components/Loader/Loader";
 import { Suspense } from "react";
 import Login from "./pages/Login";
 import Layout from "./components/layout";
+import { themeAtom } from "@repo/store/theme";
 const App = () => {
   return (
-    <div className="text-white">
+    <div className={`text-white `}>
       <RecoilRoot>
         <Suspense fallback={<Loader />}>
           <AuthApp />
@@ -21,17 +22,23 @@ const App = () => {
 };
 
 const AuthApp = () => {
-  // const user = useUser();
-  // console.log(user);
+  const user = useUser();
+  const theme = useRecoilValue(themeAtom);
+
   return (
-    <BrowserRouter>
-      <Toaster richColors />
-      <Routes>
-        <Route path="/" element={<Layout children={<Landing />} />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/play/:roomId" element={<Layout children={<Game />}/>} />
-      </Routes>
-    </BrowserRouter>
+    <div className={`${theme === "dark" ? "dark" : ""}`}>
+      <BrowserRouter>
+        <Toaster richColors />
+        <Routes>
+          <Route path="/" element={<Layout children={<Landing />} />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/play/:roomId"
+            element={<Layout children={<Game />} />}
+          />
+        </Routes>
+      </BrowserRouter>
+    </div>
   );
 };
 

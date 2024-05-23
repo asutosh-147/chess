@@ -148,8 +148,8 @@ const ChessBoard = ({
                           ? "bg-[#f6eb72]"
                           : "bg-[#dcc34b]"
                         : whiteBox
-                          ? "bg-tan-main"
-                          : "bg-green-main"
+                          ? "bg-whiteSquare-brown"
+                          : "bg-blackSquare-brown"
                   } `}
                   onClick={() => {
                     if (!started) return;
@@ -211,7 +211,7 @@ const ChessBoard = ({
                     ""
                   )}
                   {from && legalMoves.includes(squareRep) && (
-                    <div className="absolute bg-black opacity-20 size-5 rounded-full z-[1] "></div>
+                    <div className={`absolute k opacity-20 rounded-full z-[1] ${square ? "size-14 border-black border-4" :"size-5 bg-black"}`}></div>
                   )}
                 </div>
               );
