@@ -11,6 +11,7 @@ CREATE TYPE "AuthProvider" AS ENUM ('EMAIL', 'GOOGLE');
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "username" TEXT,
+    "profilePic" TEXT,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT,
@@ -27,7 +28,6 @@ CREATE TABLE "Game" (
     "id" TEXT NOT NULL,
     "whitePlayerId" TEXT NOT NULL,
     "blackPlayerId" TEXT NOT NULL,
-    "userId" TEXT,
     "status" "GameStatus" NOT NULL,
     "result" "GameResult",
     "startingFen" TEXT NOT NULL DEFAULT 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
@@ -44,13 +44,16 @@ CREATE TABLE "Game" (
 CREATE TABLE "Move" (
     "id" TEXT NOT NULL,
     "gameId" TEXT NOT NULL,
-    "move" TEXT NOT NULL,
+    "moveNumber" INTEGER NOT NULL,
+    "captured" TEXT,
+    "promotion" TEXT,
+    "piece" TEXT NOT NULL,
+    "color" TEXT NOT NULL,
     "from" TEXT NOT NULL,
     "to" TEXT NOT NULL,
     "comments" TEXT,
     "before" TEXT NOT NULL,
     "after" TEXT NOT NULL,
-    "timeTaken" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Move_pkey" PRIMARY KEY ("id")

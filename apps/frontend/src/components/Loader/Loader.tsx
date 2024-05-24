@@ -2,7 +2,7 @@ import React from "react";
 import "./loader.scss";
 type Props = {};
 
-const Loader = (props: Props) => {
+const Loader = ({}: Props) => {
   return (
     <div className="anim-container">
 

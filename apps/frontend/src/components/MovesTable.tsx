@@ -7,7 +7,7 @@ import { pieceMapping } from "@/utils/pieceMapping";
 const MovesTable = () => {
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
   const [selectedMoveIndex,setSelectedMoveIndex] = useRecoilState(selectedMoveIndexAtom);
-  const movePairs: Move[][] = allMoves.reduce((acc, move, index, arr) => {
+  const movePairs: Move[][] = allMoves.reduce((acc, _, index, arr) => {
     if (index % 2 === 0) {
       acc.push(arr.slice(index, index + 2));
     }
