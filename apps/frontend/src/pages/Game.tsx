@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "../components/ui/Button";
 import ChessBoard, { isPromoting } from "../components/ChessBoard";
 import { useSocket } from "../hooks/useSocket";
-import { Chess, Move, PieceSymbol } from "chess.js";
+import { Chess, Move } from "chess.js";
 import { toast } from "sonner";
-import useSound from "use-sound";
 import { useUser } from "@repo/store/useUser";
 import { useNavigate, useParams } from "react-router-dom";
 import PlayerLabel from "../components/PlayerLabel";
@@ -20,11 +19,12 @@ import {
   Result,
 } from "@repo/utils/messages";
 import { useRecoilState } from "recoil";
-import { movesAtomState } from "@repo/store/chessBoard";
+import { movesAtomState, selectedMoveIndexAtom } from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
 import GameEndModal from "../components/GameEndModal";
 import Confetti from "@/components/Confetti";
 import Loader from "@/components/Loader/Loader";
+import { captureAudio, castleAudio, checkMadeAudio, gameOverAudio, gameStartAudio, moveAudio } from "@/utils/audio";
 
 type gameMetaData = {
   blackPlayer: {
@@ -42,6 +42,23 @@ type gameEndResult = {
   result: Result;
   status: GameStatus;
 };
+
+const isCastle = (move:Move) =>{
+  return move.piece === "k" && Math.abs(move.to.charCodeAt(0) - move.from.charCodeAt(0)) === 2;
+}
+export const playAudio = (move:Move,chess:Chess) => {
+  if(chess.isCheck()){
+    checkMadeAudio.play();
+  }else if(move.captured){
+    captureAudio.play();
+  }else if(isCastle(move)){
+    castleAudio.play();
+  }
+  else{
+    moveAudio.play()
+  }
+}
+
 const Game = () => {
   const user = useUser();
   const navigate = useNavigate();
@@ -51,7 +68,7 @@ const Game = () => {
       navigate("/login");
     }
   }, [user]);
-  const { token, ...currentPlayerData } = user ?? {};
+  // const { token, ...currentPlayerData } = user ?? {};
   const socket = useSocket();
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
@@ -59,11 +76,10 @@ const Game = () => {
   const [gameResult, setGameResult] = useState<gameEndResult | null>(null);
   const [start, setStart] = useState<boolean>(false);
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
-  const [play] = useSound("/sounds/Chess-sounds.mp3", {
-    sprite: {
-      moveMade: [2181, 100],
-    },
-  });
+  const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
+    selectedMoveIndexAtom
+  );
+  const selectedMoveIndexRef = useRef(selectedMoveIndex);
 
   useEffect(() => {
     if (!socket) {
@@ -71,7 +87,7 @@ const Game = () => {
     }
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      console.log(message);
+      // console.log(message);
       switch (message.type) {
         case ADDED_GAME:
           toast.success("Game is added to queue", {
@@ -93,24 +109,46 @@ const Game = () => {
             blackPlayer: message.payload.blackPlayer,
             whitePlayer: message.payload.whitePlayer,
           });
+          gameStartAudio.play();
           setStart(true);
           setBoard(chess.board());
           break;
         case MOVE:
           const move = message.payload.move;
+          if (selectedMoveIndexRef.current !== null) {
+            chess.reset();
+            chess.load(move.after);
+            setBoard(chess.board());
+            setAllMoves((oldMoves) => [...oldMoves, move]);
+            setSelectedMoveIndex(null);
+            playAudio(move,chess);
+            return;
+          }
           try {
-            console.log("inside make move");
-            chess.move(move);
+            if (isPromoting(chess, move.from, move.to)) {
+              chess.move({
+                from: move.from,
+                to: move.to,
+                promotion: "q",
+              });
+            } else {
+              chess.move(move);
+            }
           } catch (error) {
             console.log("Invalid move", error);
           }
+          playAudio(move,chess);
           setBoard(chess.board());
-          setAllMoves((oldMoves) => [...oldMoves, move]);
+          setAllMoves((oldMoves) => {
+            const newMoves = [...oldMoves, move];
+            return newMoves;
+          });
           break;
         case GAME_OVER:
           console.log("Game is over");
           const { result, status } = message.payload;
           setGameResult({ result, status });
+          gameOverAudio.play();
           console.log(gameResult);
           toast.info(`Game is ${status}`, {
             description: result + " is the winner",
@@ -146,6 +184,7 @@ const Game = () => {
               status: message.payload.status,
             });
           }
+          gameStartAudio.play();
           setAllMoves(moves);
           setBoard(chess.board());
           setStart(true);
@@ -205,7 +244,6 @@ const Game = () => {
               board={board}
               socket={socket}
               playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
-              play={play}
             />
           </div>
           <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl flex justify-center w-400">
@@ -225,9 +263,16 @@ const Game = () => {
             )}
           </div>
         </div>
-        {gameData && <PlayerLabel PlayerData={ user.id === gameData?.blackPlayer.id
+        {gameData && (
+          <PlayerLabel
+            PlayerData={
+              user.id === gameData?.blackPlayer.id
                 ? gameData.blackPlayer
-                : gameData.whitePlayer } playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"} />}
+                : gameData.whitePlayer
+            }
+            playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
+          />
+        )}
       </div>
     </div>
   );

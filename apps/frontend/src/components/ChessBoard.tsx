@@ -3,9 +3,14 @@ import { useEffect, useState } from "react";
 import { pieceMapping } from "../utils/pieceMapping";
 import { toast } from "sonner";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { isBoardFlipped, movesAtomState } from "@repo/store/chessBoard";
+import {
+  isBoardFlipped,
+  movesAtomState,
+  selectedMoveIndexAtom,
+} from "@repo/store/chessBoard";
 import { useParams } from "react-router-dom";
 import { MOVE } from "@repo/utils/messages";
+import { playAudio } from "@/pages/Game";
 export function isPromoting(chess: Chess, from: Square, to: Square) {
   if (!from) {
     return false;
@@ -39,7 +44,6 @@ type Props = {
   chess: any;
   setBoard: any;
   playerColor: string;
-  play: any;
   started: boolean;
 };
 const ChessBoard = ({
@@ -48,7 +52,6 @@ const ChessBoard = ({
   setBoard,
   chess,
   playerColor,
-  play,
   started,
 }: Props) => {
   const { roomId: gameId } = useParams();
@@ -60,22 +63,10 @@ const ChessBoard = ({
   );
   const isMyTurn = playerColor === chess.turn();
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
-  useEffect(() => {
-    if (playerColor === "b") {
-      setIsFlipped(true);
-    } else {
-      setIsFlipped(false);
-    }
-  }, [playerColor]);
-  useEffect(() => {
-    const lastM = allMoves.at(-1);
-    if (lastM) {
-      setLastMove({ from: lastM.from, to: lastM.to });
-    } else {
-      setLastMove(null);
-    }
-  }, [allMoves]);
-
+  const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
+    selectedMoveIndexAtom
+  );
+  // console.log(allMoves);
   const handleMakeMove = (from: Square, squareRep: Square) => {
     console.log(from, squareRep);
     try {
@@ -96,7 +87,6 @@ const ChessBoard = ({
         });
       }
       if (moveResult) {
-        play({ id: "moveMade" });
         console.log("local move is made");
         socket.send(
           JSON.stringify({
@@ -107,6 +97,7 @@ const ChessBoard = ({
             },
           })
         );
+        playAudio(moveResult, chess);
         setAllMoves((prevMoves) => [...prevMoves, moveResult]);
         setLegalMoves([]);
         setBoard(chess.board());
@@ -119,6 +110,34 @@ const ChessBoard = ({
       });
     }
   };
+
+  useEffect(() => {
+    if (playerColor === "b") {
+      setIsFlipped(true);
+    } else {
+      setIsFlipped(false);
+    }
+  }, [playerColor]);
+  useEffect(() => {
+    const lastM = allMoves.at(-1);
+    if (lastM) {
+      setLastMove({ from: lastM.from, to: lastM.to });
+    } else {
+      setLastMove(null);
+    }
+    setBoard(chess.board());
+  }, [allMoves]);
+
+  useEffect(() => {
+    if (selectedMoveIndex !== null) {
+      const move = allMoves[selectedMoveIndex];
+      chess.reset();
+      chess.load(move.after);
+      setLastMove({ from: move.from, to: move.to });
+      setBoard(chess.board());
+    }
+  }, [selectedMoveIndex]);
+
   return (
     <div className="text-white">
       {(isFlipped ? [...board].reverse() : board).map((row, i) => {
@@ -153,10 +172,18 @@ const ChessBoard = ({
                   } `}
                   onClick={() => {
                     if (!started) return;
+                    if (selectedMoveIndex !== null) {
+                      chess.reset();
+                      const move = allMoves[allMoves.length - 1];
+                      chess.load(move?.after);
+                      setLastMove({ from: move?.from, to: move?.to });
+                      setBoard(chess.board());
+                      setSelectedMoveIndex(null);
+                    }
                     if (!isMyTurn) return;
                     if (!square && from === null) return;
                     if (!from && square?.color !== chess.turn()) return;
-                    if(from && from === squareRep){
+                    if (from && from === squareRep) {
                       setFrom(null);
                       setLegalMoves([]);
                       return;
@@ -211,7 +238,9 @@ const ChessBoard = ({
                     ""
                   )}
                   {from && legalMoves.includes(squareRep) && (
-                    <div className={`absolute k opacity-20 rounded-full z-[1] ${square ? "size-14 border-black border-4" :"size-5 bg-black"}`}></div>
+                    <div
+                      className={`absolute k opacity-20 rounded-full z-[1] ${square ? "size-14 border-black border-4" : "size-5 bg-black"}`}
+                    ></div>
                   )}
                 </div>
               );

@@ -32,14 +32,6 @@ const GameEndModal = ({ gameData, gameResult }: Props) => {
   const handleClose = () => {
     setIsOpen(false);
   };
-  // useEffect(() => {
-  //   if(isOpen){
-  //     document.body.classList.add("modal-open");
-  //   }
-  //   return () => {
-  //     document.body.classList.remove("modal-open");
-  //   };
-  // }, []);
   return (
     <>
       {isOpen && (

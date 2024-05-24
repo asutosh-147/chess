@@ -39,7 +39,6 @@ const PlayerLabel = ({ PlayerData, playerColor }: Props) => {
               );
             })
             .map((move, index) => {
-              console.log(move.color, "captured : ", move?.captured);
               return (
                 move?.captured && (
                   <div key={index}>

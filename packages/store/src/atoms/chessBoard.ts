@@ -10,3 +10,7 @@ export const movesAtomState = atom<Move[]>({
   default: [],
 })
 
+export const selectedMoveIndexAtom = atom<number | null>({
+  key:"selectedMoveIndexAtom",
+  default: null,
+})

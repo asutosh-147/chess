@@ -1,11 +1,12 @@
-import { movesAtomState } from "@repo/store/chessBoard";
+import { movesAtomState, selectedMoveIndexAtom } from "@repo/store/chessBoard";
 import { useEffect, useRef } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import "../index.css";
 import { Move } from "chess.js";
-import { iconPieceMapping, pieceMapping } from "@/utils/pieceMapping";
+import { pieceMapping } from "@/utils/pieceMapping";
 const MovesTable = () => {
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
+  const [selectedMoveIndex,setSelectedMoveIndex] = useRecoilState(selectedMoveIndexAtom);
   const movePairs: Move[][] = allMoves.reduce((acc, move, index, arr) => {
     if (index % 2 === 0) {
       acc.push(arr.slice(index, index + 2));
@@ -23,7 +24,7 @@ const MovesTable = () => {
       <div className="w-full mt-1 font-light">
         <div
           ref={scrollRef}
-          className="overflow-y-auto scroll-smooth scrollbar-custom h-72 rounded-br-lg border-b-gray-100 pb-4 border-b-2"
+          className="overflow-y-auto scroll-smooth scrollbar-custom h-72 rounded-br-lg border-b-gray-100 pb-4 "
         >
           {movePairs.map((movepair, index, arr) => {
             const moveNumber = index;
@@ -41,10 +42,13 @@ const MovesTable = () => {
                       const isLastMoveMade =
                         index === arr.length - 1 &&
                         pairIndex === pairArr.length - 1;
+                      const isHighLightedMove = selectedMoveIndex!==null ? moveNumber * 2 + pairIndex === selectedMoveIndex : isLastMoveMade;
                       return (
-                        <span key={pairIndex} className="w-12 text-left">
-                          <span
-                            className={`p-1 flex justify-center items-center gap-1 ${isLastMoveMade ? "bg-white bg-opacity-15 rounded-md border-b-2" : ""}`}
+                        <span key={pairIndex} className="w-12 text-left" onClick={()=>{
+                          setSelectedMoveIndex(moveNumber * 2 + pairIndex);
+                        }}>
+                          <button
+                            className={`p-1 flex justify-center hover:cursor-pointer hover:bg-white hover:bg-opacity-15 hover:rounded-md hover:border-b-1 items-center gap-1 ${isHighLightedMove ? "bg-white bg-opacity-15 rounded-md border-b-2" : ""}`}
                           >
                             <span className="text-sm">
                               {
@@ -61,7 +65,7 @@ const MovesTable = () => {
                               }
                             </span>
                             {move.to}
-                          </span>
+                          </button>
                         </span>
                       );
                     })}
