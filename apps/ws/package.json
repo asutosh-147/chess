@@ -8,7 +8,7 @@
     "build": "prisma generate --schema ../../packages/db/prisma/schema.prisma && npx esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --sourcemap",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
-    "start": "node src/index.ts"
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
