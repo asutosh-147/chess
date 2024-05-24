@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "npx esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --sourcemap && node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
-    "start": "nodemon src/index.ts",
-    "build": "esbuild ./src/index.ts --bundle --platform=node --outfile=dist/index.js --sourcemap && node dist/index.js" 
+    "start": "nodemon src/index.ts"
   },
   "keywords": [],
   "author": "",
