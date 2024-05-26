@@ -17,7 +17,7 @@ export const initPassport = () => {
         {
           clientID: GOOGLE_CLIENT_ID,
           clientSecret: GOOGLE_CLIENT_SECRET,
-          callbackURL: "https://chess-r38u.onrender.com/auth/google/callback",
+          callbackURL: "/auth/google/callback",
         },
         async function (
           accessToken: string,

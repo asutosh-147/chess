@@ -1,5 +1,5 @@
 import { atom, selector } from "recoil";
-const BACKEND_URL = "https://chess-r38u.onrender.com";
+const BACKEND_URL = "https://localhost:3000";
 
 export type User = {
   token: string;
