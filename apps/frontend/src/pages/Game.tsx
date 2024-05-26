@@ -17,6 +17,7 @@ import {
   MOVE,
   GameStatus,
   Result,
+  AUTO_ABORT,
 } from "@repo/utils/messages";
 import { useRecoilState } from "recoil";
 import { movesAtomState, selectedMoveIndexAtom } from "@repo/store/chessBoard";
@@ -24,7 +25,14 @@ import MovesTable from "../components/MovesTable";
 import GameEndModal from "../components/GameEndModal";
 import Confetti from "@/components/Confetti";
 import Loader from "@/components/Loader/Loader";
-import { captureAudio, castleAudio, checkMadeAudio, gameOverAudio, gameStartAudio, moveAudio } from "@/utils/audio";
+import {
+  captureAudio,
+  castleAudio,
+  checkMadeAudio,
+  gameOverAudio,
+  gameStartAudio,
+  moveAudio,
+} from "@/utils/audio";
 
 type gameMetaData = {
   blackPlayer: {
@@ -43,21 +51,23 @@ type gameEndResult = {
   status: GameStatus;
 };
 
-const isCastle = (move:Move) =>{
-  return move.piece === "k" && Math.abs(move.to.charCodeAt(0) - move.from.charCodeAt(0)) === 2;
-}
-export const playAudio = (move:Move,chess:Chess) => {
-  if(chess.isCheck()){
+const isCastle = (move: Move) => {
+  return (
+    move.piece === "k" &&
+    Math.abs(move.to.charCodeAt(0) - move.from.charCodeAt(0)) === 2
+  );
+};
+export const playAudio = (move: Move, chess: Chess) => {
+  if (chess.isCheck()) {
     checkMadeAudio.play();
-  }else if(move.captured){
+  } else if (move.captured) {
     captureAudio.play();
-  }else if(isCastle(move)){
+  } else if (isCastle(move)) {
     castleAudio.play();
+  } else {
+    moveAudio.play();
   }
-  else{
-    moveAudio.play()
-  }
-}
+};
 
 const Game = () => {
   const user = useUser();
@@ -94,6 +104,11 @@ const Game = () => {
             description: "waiting for opponent",
           });
           break;
+        case AUTO_ABORT:
+          toast.error("Inactivity", {
+            description: message.payload.message,
+          });
+          break;
         case GAME_ALERT:
           console.log(message.payload.message);
           toast.error("Game Alert", {
@@ -121,7 +136,7 @@ const Game = () => {
             setBoard(chess.board());
             setAllMoves((oldMoves) => [...oldMoves, move]);
             setSelectedMoveIndex(null);
-            playAudio(move,chess);
+            playAudio(move, chess);
             return;
           }
           try {
@@ -137,7 +152,7 @@ const Game = () => {
           } catch (error) {
             console.log("Invalid move", error);
           }
-          playAudio(move,chess);
+          playAudio(move, chess);
           setBoard(chess.board());
           setAllMoves((oldMoves) => {
             const newMoves = [...oldMoves, move];
@@ -177,7 +192,7 @@ const Game = () => {
           });
           if (
             message.payload?.result &&
-            message.payload?.status === "COMPLETED"
+            message.payload?.status !== "IN_PROGRESS"
           ) {
             setGameResult({
               result: message.payload.result,

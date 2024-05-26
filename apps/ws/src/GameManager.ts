@@ -30,9 +30,12 @@ export class GameManager {
       return;
     }
     this.users.filter((user) => user.socket !== socket);
-
-    if (this.pendingGameId === user.userId) {
-      this.pendingGameId = null;
+    if (this.pendingGameId) {
+      const game = this.games.find(game => game.gameId === this.pendingGameId);
+      if( game && game.player1UserId === user.userId){
+        this.removeGame(game.gameId);
+        return;
+      }
     }
     SocketManager.getInstance().removeUser(user.userId);
   }

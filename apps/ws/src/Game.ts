@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { Chess, Move, Square } from "chess.js";
-import { GAME_OVER, INIT_GAME, MOVE } from "@repo/utils/index";
+import { AUTO_ABORT, GAME_OVER, INIT_GAME, MOVE } from "@repo/utils/index";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { SocketManager, User } from "./UserSocketManager";
@@ -25,18 +25,22 @@ export function isPromoting(chess: Chess, from: Square, to: Square) {
     return false;
   }
 
-  return  chess
-  .moves({ square: from, verbose: true })
-  .map((it) => it.to)
-  .includes(to);
+  return chess
+    .moves({ square: from, verbose: true })
+    .map((it) => it.to)
+    .includes(to);
 }
 export class Game {
   public gameId: string;
   public player1UserId: string;
   public player2UserId: string | null;
   public board: Chess;
-  private startTime: Date;
+  public status: GameStatus;
+  public result: Result | null = null;
   public moveCount: number;
+  private abandonTimer: NodeJS.Timeout | null = null;
+  private abandonPopupTimer: NodeJS.Timeout | null = null;
+  private startTime: Date;
 
   constructor(
     p1UserId: string,
@@ -49,7 +53,38 @@ export class Game {
     this.player2UserId = p2UserId;
     this.board = new Chess();
     this.startTime = startTime ?? new Date();
+    this.status = "IN_PROGRESS";
     this.moveCount = 0;
+  }
+
+  private stopAbandonTimers() {
+    if (this.abandonTimer) {
+      clearTimeout(this.abandonTimer);
+      this.abandonTimer = null;
+    }
+    if(this.abandonPopupTimer){
+      clearTimeout(this.abandonPopupTimer);
+      this.abandonPopupTimer=null
+    }
+  }
+  private startAbandonTimer() {
+    this.abandonPopupTimer = setTimeout(() => {
+      SocketManager.getInstance().broadcastMessage(
+        this.gameId,
+        JSON.stringify({
+          type: AUTO_ABORT,
+          payload: {
+            message: `auto aborting in 30 seconds if ${this.board.turn() === "b" ? "black" : "white"} doesn't move`,
+          },
+        })
+      );
+      this.abandonTimer = setTimeout(() => {
+        this.endGame(
+          "ABANDONED",
+          this.board.turn() === "b" ? "WHITE_WINS" : "BLACK_WINS"
+        );
+      }, 30 * 1000);
+    }, 30 * 1000);
   }
 
   async addP2ToGame(p2UserId: string) {
@@ -59,6 +94,7 @@ export class Game {
       await this.addGameToDB();
     } catch (error) {
       console.log("error adding game in db :", error);
+      return;
     }
 
     const users = await db.user.findMany({
@@ -91,6 +127,7 @@ export class Game {
         },
       })
     );
+    this.startAbandonTimer();
   }
 
   seedAllMoves(
@@ -108,20 +145,20 @@ export class Game {
       promotion: string | null;
     }[]
   ) {
-    moves.forEach((move)=>{
-      if(isPromoting(this.board, move.from as Square,move.to as Square)){
+    moves.forEach((move) => {
+      if (isPromoting(this.board, move.from as Square, move.to as Square)) {
         this.board.move({
-          from:move.from,
-          to:move.to,
-          promotion:"q"
+          from: move.from,
+          to: move.to,
+          promotion: "q",
         });
-      }else{
+      } else {
         this.board.move({
-          from:move.from,
-          to:move.to
+          from: move.from,
+          to: move.to,
         });
       }
-    })
+    });
     this.moveCount = moves.length;
   }
 
@@ -159,6 +196,7 @@ export class Game {
       console.log("error in making move", error);
       return;
     }
+    this.stopAbandonTimers();
 
     //add move to db
     try {
@@ -192,7 +230,7 @@ export class Game {
       this.endGame("COMPLETED", result);
       return;
     }
-
+    this.startAbandonTimer();
     console.log("move count:", this.moveCount);
   }
   async endGame(status: GameStatus, result: Result) {
