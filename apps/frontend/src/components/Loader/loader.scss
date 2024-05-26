@@ -1,4 +1,4 @@
-$background: #222;
+// $background: #222;
 $leftFace: #D53A33;
 $rightFace: #E79C10;
 $topFace: #1d9099;
@@ -14,14 +14,12 @@ animation-body {
   width:100vw;
   margin:0;
   padding:0;
-  background:$background;
 }
 
 .anim-container {
-  position:relative;
   height:100px;
   width:86px;
-  transform:scale(#{$scale * .5});
+  transform:scale(#{$scale * .9});
 }
 
 .cube {
