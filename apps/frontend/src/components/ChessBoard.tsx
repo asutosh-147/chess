@@ -69,7 +69,6 @@ const ChessBoard = ({
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
     selectedMoveIndexAtom
   );
-  // console.log(allMoves);
   const getSelectedPiece = () => {
     return new Promise<string>((resolve) => {
       const selectChoice = (choice: "q" | "b" | "r" | "n") => {

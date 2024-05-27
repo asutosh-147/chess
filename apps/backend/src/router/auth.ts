@@ -9,7 +9,6 @@ dotenv.config();
 const REDIRECT_URL = process.env.REDIRECT_URL || 'http://localhost:5173/play/start';
 const JWT_SECRET = process.env.JWT_SECRET || 'pussy_cat';
 const LOGOUT_REDIRECT_URL = process.env.LOGOUT_REDIRECT_URL || 'http://localhost:5173/';
-console.log(process.env.REDIRECT_URL);
 type User = {
     id: string;
 };
