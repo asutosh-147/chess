@@ -1,5 +1,5 @@
 import { Chess, Color, Move, PieceSymbol, Square } from "chess.js";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { pieceMapping } from "../utils/pieceMapping";
 import { toast } from "sonner";
 import { useRecoilState, useSetRecoilState } from "recoil";
@@ -11,6 +11,8 @@ import {
 import { useParams } from "react-router-dom";
 import { MOVE } from "@repo/utils/messages";
 import { playAudio } from "@/pages/Game";
+import PromotionOptions from "./PromotionOptions";
+
 export function isPromoting(chess: Chess, from: Square, to: Square) {
   if (!from) {
     return false;
@@ -61,23 +63,36 @@ const ChessBoard = ({
   const [lastMove, setLastMove] = useState<null | { from: string; to: string }>(
     null
   );
+  const [promoting, setPromoting] = useState<React.ReactNode | null>(null);
   const isMyTurn = playerColor === chess.turn();
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
     selectedMoveIndexAtom
   );
   // console.log(allMoves);
-  const handleMakeMove = (from: Square, squareRep: Square) => {
+  const getSelectedPiece = () => {
+    return new Promise<string>((resolve) => {
+      const selectChoice = (choice: "q" | "b" | "r" | "n") => {
+        resolve(choice);
+        setPromoting(null);
+      };
+      setPromoting(
+        <PromotionOptions select={selectChoice} color={playerColor} />
+      );
+    });
+  };
+  const handleMakeMove = async (from: Square, squareRep: Square) => {
     console.log(from, squareRep);
     try {
       console.log("trying to make move");
       let moveResult: Move;
       if (isPromoting(chess, from, squareRep)) {
         console.log("promoting");
+        const piece = await getSelectedPiece();
         moveResult = chess.move({
           from,
           to: squareRep,
-          promotion: "q",
+          promotion: piece,
         });
       } else {
         console.log("not promoting");
@@ -105,6 +120,7 @@ const ChessBoard = ({
       }
     } catch (e: any) {
       setFrom(null);
+      setPromoting(null);
       toast.error("Invalid move", {
         description: e.message,
       });
@@ -137,7 +153,7 @@ const ChessBoard = ({
       setBoard(chess.board());
     }
   }, [selectedMoveIndex]);
-
+  console.log(from);
   return (
     <div className="text-white">
       {(isFlipped ? [...board].reverse() : board).map((row, i) => {
@@ -185,6 +201,7 @@ const ChessBoard = ({
                     if (!from && square?.color !== chess.turn()) return;
                     if (from && from === squareRep) {
                       setFrom(null);
+                      setPromoting(null);
                       setLegalMoves([]);
                       return;
                     }
@@ -242,6 +259,7 @@ const ChessBoard = ({
                       className={`absolute k opacity-20 rounded-full z-[1] ${square ? "size-14 border-black border-4" : "size-5 bg-black"}`}
                     ></div>
                   )}
+                  {from === squareRep && promoting}
                 </div>
               );
             })}
