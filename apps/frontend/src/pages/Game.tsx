@@ -140,15 +140,7 @@ const Game = () => {
             return;
           }
           try {
-            if (isPromoting(chess, move.from, move.to)) {
-              chess.move({
-                from: move.from,
-                to: move.to,
-                promotion: "q",
-              });
-            } else {
-              chess.move(move);
-            }
+            chess.move(move);
           } catch (error) {
             console.log("Invalid move", error);
           }
@@ -180,15 +172,7 @@ const Game = () => {
             whitePlayer,
           });
           message.payload.moves.forEach((move: Move) => {
-            if (isPromoting(chess, move.from, move.to)) {
-              chess.move({
-                from: move.from,
-                to: move.to,
-                promotion: "q",
-              });
-            } else {
-              chess.move(move);
-            }
+            chess.move(move);
           });
           if (
             message.payload?.result &&

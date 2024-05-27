@@ -146,11 +146,11 @@ export class Game {
     }[]
   ) {
     moves.forEach((move) => {
-      if (isPromoting(this.board, move.from as Square, move.to as Square)) {
+      if (move.promotion) {
         this.board.move({
           from: move.from,
           to: move.to,
-          promotion: "q",
+          promotion: move.promotion,
         });
       } else {
         this.board.move({
@@ -178,12 +178,12 @@ export class Game {
     //make the move
     try {
       console.log("inside make move try block");
-      if (isPromoting(this.board, from, to)) {
+      if (move.promotion) {
         console.log("promoting");
         this.board.move({
           from,
           to,
-          promotion: "q",
+          promotion: move.promotion,
         });
       } else {
         this.board.move({
