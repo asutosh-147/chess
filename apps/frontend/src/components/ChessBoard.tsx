@@ -153,7 +153,6 @@ const ChessBoard = ({
       setBoard(chess.board());
     }
   }, [selectedMoveIndex]);
-  console.log(from);
   return (
     <div className="text-white">
       {(isFlipped ? [...board].reverse() : board).map((row, i) => {
