@@ -2,7 +2,9 @@ import { Request, Response, Router } from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { db } from '../db';
+import dotenv from 'dotenv'
 const authRouter = Router();
+dotenv.config();
 
 const REDIRECT_URL = process.env.REDIRECT_URL || 'http://localhost:5173/play/start';
 const JWT_SECRET = process.env.JWT_SECRET || 'pussy_cat';

@@ -90,7 +90,9 @@ const Game = () => {
     selectedMoveIndexAtom
   );
   const selectedMoveIndexRef = useRef(selectedMoveIndex);
-
+  useEffect(()=>{
+    selectedMoveIndexRef.current = selectedMoveIndex;
+  },[selectedMoveIndex])
   useEffect(() => {
     if (!socket) {
       return;
@@ -130,6 +132,7 @@ const Game = () => {
           break;
         case MOVE:
           const move = message.payload.move;
+          console.log(selectedMoveIndexRef.current);
           if (selectedMoveIndexRef.current !== null) {
             chess.reset();
             chess.load(move.after);
