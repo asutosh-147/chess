@@ -81,10 +81,11 @@ export class Game {
       this.abandonTimer = setTimeout(() => {
         this.endGame(
           "ABANDONED",
-          this.board.turn() === "b" ? "WHITE_WINS" : "BLACK_WINS"
+          this.board.turn() === "b" ? "WHITE_WINS" : "BLACK_WINS",
+          "Auto Abort"
         );
       }, 30 * 1000);
-    }, 30 * 1000);
+    }, 30 * 100000);
   }
 
   async addP2ToGame(p2UserId: string) {
@@ -227,13 +228,14 @@ export class Game {
         : this.board.turn() === "w"
           ? "BLACK_WINS"
           : "WHITE_WINS";
-      this.endGame("COMPLETED", result);
+      const by = result === "DRAW" ? "" : "Checkmate"
+      this.endGame("COMPLETED", result,by);
       return;
     }
     this.startAbandonTimer();
     console.log("move count:", this.moveCount);
   }
-  async endGame(status: GameStatus, result: Result) {
+  async endGame(status: GameStatus, result: Result,by:string) {
     const finalGameStatus = await db.game.update({
       where: {
         id: this.gameId,
@@ -241,6 +243,7 @@ export class Game {
       data: {
         status: status,
         result: result,
+        by:by,
         endAt: new Date(),
       },
       include: {
@@ -258,6 +261,7 @@ export class Game {
         payload: {
           result,
           status,
+          by:by
         },
       })
     );
