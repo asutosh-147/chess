@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FaChessQueen } from "react-icons/fa";
 import { Result, GameStatus } from "@repo/utils/messages";
 import { RxCross2 } from "react-icons/rx";
+import { gameEndResult } from "@/pages/Game";
 type Props = {
   gameData: {
     blackPlayer: {
@@ -17,10 +18,7 @@ type Props = {
       profilePic: string;
     };
   };
-  gameResult: {
-    result: Result;
-    status: GameStatus;
-  };
+  gameResult: gameEndResult;
 };
 
 const GameEndModal = ({ gameData, gameResult }: Props) => {
@@ -36,21 +34,23 @@ const GameEndModal = ({ gameData, gameResult }: Props) => {
     <>
       {isOpen && (
         <div className="fixed z-[1] bg-black bg-opacity-40 flex flex-col justify-center h-screen w-full ">
-          <div className="bg-stone-900 rounded-lg shadow-2xl flex flex-col items-center p-6 w-96 h-72 gap-5 mx-auto relative">
-            <button
-              onClick={handleClose}
-              className="absolute top-3 right-3"
-            >
+          <div className="bg-stone-900 rounded-lg shadow-2xl flex flex-col items-center p-6 w-96 gap-5 mx-auto relative">
+            <button onClick={handleClose} className="absolute top-3 right-3">
               <RxCross2 className="text-xl font-bold" />
             </button>
             <div className="w-full border-b-2 border-b-gray-50 border-opacity-[0.2] text-center pb-2">
-              <div className="font-extrabold">
+              <div className="font-extrabold text-xl">
                 {gameResult.result === "DRAW"
                   ? "It's a Draw"
                   : gameResult.result === "WHITE_WINS"
                     ? "White Wins"
                     : "Black Wins"}
               </div>
+              {gameResult.by ? (
+                <div className="mt-2 font-medium">by {gameResult.by}</div>
+              ) : (
+                <></>
+              )}
             </div>
             <div className="flex justify-evenly items-center gap-8 w-full px-2 mt-2">
               <div className="flex flex-col items-center gap-2">
@@ -85,7 +85,7 @@ const GameEndModal = ({ gameData, gameResult }: Props) => {
                 </div>
               </div>
             </div>
-            <Button className="font-bold" onClick={handleCLick} >
+            <Button className="font-bold" onClick={handleCLick}>
               New Game
             </Button>
           </div>

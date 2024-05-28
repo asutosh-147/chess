@@ -19,6 +19,7 @@ import {
   Result,
   AUTO_ABORT,
   CREATE_ROOM,
+  DELETE_ROOM,
 } from "@repo/utils/messages";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { movesAtomState, selectedMoveIndexAtom } from "@repo/store/chessBoard";
@@ -34,6 +35,8 @@ import {
   gameStartAudio,
   moveAudio,
 } from "@/utils/audio";
+import RoomDetails from "@/components/RoomDetails";
+import InGameButtons from "@/components/InGameButtons";
 
 type gameMetaData = {
   blackPlayer: {
@@ -47,9 +50,10 @@ type gameMetaData = {
     profilePic: string;
   };
 };
-type gameEndResult = {
+export type gameEndResult = {
   result: Result;
   status: GameStatus;
+  by: string | null;
 };
 
 const isCastle = (move: Move) => {
@@ -114,8 +118,15 @@ const Game = () => {
           });
           break;
         case CREATE_ROOM:
+          console.log("message from room");
           setRoom(message.payload.gameId);
           toast.success("Created", {
+            description: message.payload.message,
+          });
+          break;
+        case DELETE_ROOM:
+          setRoom(null);
+          toast.success("Deleted", {
             description: message.payload.message,
           });
           break;
@@ -140,7 +151,6 @@ const Game = () => {
           break;
         case MOVE:
           const move = message.payload.move;
-          console.log(selectedMoveIndexRef.current);
           if (selectedMoveIndexRef.current !== null) {
             chess.reset();
             chess.load(move.after);
@@ -164,8 +174,8 @@ const Game = () => {
           break;
         case GAME_OVER:
           console.log("Game is over");
-          const { result, status } = message.payload;
-          setGameResult({ result, status });
+          const { result, status, by } = message.payload;
+          setGameResult({ result, status,by});
           gameOverAudio.play();
           console.log(gameResult);
           toast.info(`Game is ${status}`, {
@@ -192,6 +202,7 @@ const Game = () => {
             setGameResult({
               result: message.payload.result,
               status: message.payload.status,
+              by: message.payload.by,
             });
           }
           gameStartAudio.play();
@@ -230,7 +241,11 @@ const Game = () => {
     <div className="flex justify-center">
       {gameResult &&
         gameResult.status === "COMPLETED" &&
-        gameResult.result !== "DRAW" && <Confetti />}
+        gameResult.result !== "DRAW" &&
+        ((gameResult.result === "BLACK_WINS" &&
+          gameData?.blackPlayer.id === user.id) ||
+          (gameResult.result === "WHITE_WINS" &&
+            gameData?.whitePlayer.id === user.id)) && <Confetti />}
       {gameData && gameResult && (
         <GameEndModal gameData={gameData!} gameResult={gameResult!} />
       )}
@@ -256,7 +271,7 @@ const Game = () => {
               playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
             />
           </div>
-          <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl flex justify-center w-400">
+          <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl w-400">
             {!start ? (
               <div className="mt-4">
                 {!room ? (
@@ -278,15 +293,15 @@ const Game = () => {
                       Create Room
                     </Button>
                   </div>
-                ):(
-                  <div>
-                    
-                  </div>
-                )
-                }
+                ) : (
+                  <div>{room && <RoomDetails roomId={room} socket={socket} />}</div>
+                )}
               </div>
             ) : (
-              <MovesTable />
+              <div className="flex flex-col gap-5">
+                <MovesTable />
+                <InGameButtons socket={socket} gameId={gameId ?? ""} />
+              </div>
             )}
           </div>
         </div>
