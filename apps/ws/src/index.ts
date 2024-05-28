@@ -3,9 +3,10 @@ import { GameManager } from "./GameManager";
 import url from "url";
 import { decodeTokenUserId } from "./auth/auth";
 import { User } from "./UserSocketManager";
+import dotenv from 'dotenv';
+dotenv.config();
 const wss = new WebSocketServer({ port: 8080 });
 export const gameManager = new GameManager();
-
 wss.on("connection", function connection(ws, req) {
   const token = url.parse(req.url as string, true).query.token;
   const userId = decodeTokenUserId(token as string);

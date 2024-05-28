@@ -32,10 +32,12 @@ export class GameManager {
     }
     this.users.filter((user) => user.socket !== socket);
     if (this.pendingGameId) {
-      const game = this.games.find(game => game.gameId === this.pendingGameId);
-      if( game && game.player1UserId === user.userId){
+      const game = this.games.find(
+        (game) => game.gameId === this.pendingGameId
+      );
+      if (game && game.player1UserId === user.userId) {
         this.removeGame(game.gameId);
-        return;
+        this.pendingGameId = null;
       }
     }
     SocketManager.getInstance().removeUser(user.userId);
@@ -57,22 +59,28 @@ export class GameManager {
     socket.on("message", async (data) => {
       const message = JSON.parse(data.toString());
 
-      if(message.type === CREATE_ROOM){
-          const availableGame = this.games.find(game => game.player1UserId === user.userId || game.player2UserId === user.userId);
-          if(availableGame){
-            this.joinGame(availableGame.gameId,user);
-            return;
-          }
-          const game = new Game(user.userId,null);
-          this.games.push(game);
-          SocketManager.getInstance().addUserToMapping(game.gameId,user);
-          socket.send(JSON.stringify({
-            type:CREATE_ROOM,
-            payload:{
-              gameId:game.gameId,
-              message:"waiting for other player to join!!!"
-            }
-          }))
+      if (message.type === CREATE_ROOM) {
+        const availableGame = this.games.find(
+          (game) =>
+            game.player1UserId === user.userId ||
+            game.player2UserId === user.userId
+        );
+        if (availableGame) {
+          this.joinGame(availableGame.gameId, user);
+          return;
+        }
+        const game = new Game(user.userId, null);
+        this.games.push(game);
+        SocketManager.getInstance().addUserToMapping(game.gameId, user);
+        socket.send(
+          JSON.stringify({
+            type: CREATE_ROOM,
+            payload: {
+              gameId: game.gameId,
+              message: "waiting for other player to join!!!",
+            },
+          })
+        );
       }
 
       if (message.type === INIT_GAME) {
@@ -121,7 +129,7 @@ export class GameManager {
           );
         }
       }
-      
+
       if (message.type === MOVE) {
         const game = this.games.find(
           (game) => game.gameId === message.payload.gameId
@@ -144,16 +152,37 @@ export class GameManager {
     const socket = user.socket;
     SocketManager.getInstance().addUserToMapping(gameId, user);
     let availableGame = this.games.find((game) => game.gameId === gameId);
-    if(availableGame && availableGame.player1UserId!=user.userId && availableGame.player2UserId === null){
-        availableGame.addP2ToGame(user.userId);
-        return;
+    if (
+      availableGame &&
+      availableGame.player1UserId != user.userId &&
+      availableGame.player2UserId === null
+    ) {
+      availableGame.addP2ToGame(user.userId);
+      return;
+    }
+    if (
+      availableGame &&
+      availableGame.player1UserId === user.userId &&
+      availableGame.player2UserId === null &&
+      this.pendingGameId !== availableGame.gameId
+    ) {
+      user.socket.send(
+        JSON.stringify({
+          type: CREATE_ROOM,
+          payload: {
+            gameId,
+            message: "room already created",
+          },
+        })
+      );
+      return;
     }
     if (
       availableGame &&
       availableGame.player1UserId === user.userId &&
       availableGame.player2UserId === null
     ) {
-      console.log("game already in queue")
+      console.log("game already in queue");
       user.socket.send(
         JSON.stringify({
           type: GAME_ALERT,
