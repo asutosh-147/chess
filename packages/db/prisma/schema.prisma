@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
   // directUrl = env("DIRECT_URL")
 }
 
@@ -33,6 +33,7 @@ model Game {
   blackPlayer   User        @relation("blackPlayer", fields: [blackPlayerId], references: [id])
   status        GameStatus
   result        GameResult?
+  by            String?
   startingFen   String      @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
   currentFen    String?
   startAt       DateTime    @default(now())

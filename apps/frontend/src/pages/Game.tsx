@@ -18,8 +18,10 @@ import {
   GameStatus,
   Result,
   AUTO_ABORT,
+  CREATE_ROOM,
+  DELETE_ROOM,
 } from "@repo/utils/messages";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { movesAtomState, selectedMoveIndexAtom } from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
 import GameEndModal from "../components/GameEndModal";
@@ -33,6 +35,8 @@ import {
   gameStartAudio,
   moveAudio,
 } from "@/utils/audio";
+import RoomDetails from "@/components/RoomDetails";
+import InGameButtons from "@/components/InGameButtons";
 
 type gameMetaData = {
   blackPlayer: {
@@ -46,9 +50,10 @@ type gameMetaData = {
     profilePic: string;
   };
 };
-type gameEndResult = {
+export type gameEndResult = {
   result: Result;
   status: GameStatus;
+  by: string | null;
 };
 
 const isCastle = (move: Move) => {
@@ -85,21 +90,21 @@ const Game = () => {
   const [gameData, setGameData] = useState<gameMetaData | null>(null);
   const [gameResult, setGameResult] = useState<gameEndResult | null>(null);
   const [start, setStart] = useState<boolean>(false);
-  const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
+  const setAllMoves = useSetRecoilState(movesAtomState);
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
     selectedMoveIndexAtom
   );
+  const [room, setRoom] = useState<string | null>(null);
   const selectedMoveIndexRef = useRef(selectedMoveIndex);
-  useEffect(()=>{
+  useEffect(() => {
     selectedMoveIndexRef.current = selectedMoveIndex;
-  },[selectedMoveIndex])
+  }, [selectedMoveIndex]);
   useEffect(() => {
     if (!socket) {
       return;
     }
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      // console.log(message);
       switch (message.type) {
         case ADDED_GAME:
           toast.success("Game is added to queue", {
@@ -111,8 +116,19 @@ const Game = () => {
             description: message.payload.message,
           });
           break;
+        case CREATE_ROOM:
+          setRoom(message.payload.gameId);
+          toast.success("Created", {
+            description: message.payload.message,
+          });
+          break;
+        case DELETE_ROOM:
+          setRoom(null);
+          toast.success("Deleted", {
+            description: message.payload.message,
+          });
+          break;
         case GAME_ALERT:
-          console.log(message.payload.message);
           toast.error("Game Alert", {
             description: message.payload.message,
           });
@@ -132,7 +148,6 @@ const Game = () => {
           break;
         case MOVE:
           const move = message.payload.move;
-          console.log(selectedMoveIndexRef.current);
           if (selectedMoveIndexRef.current !== null) {
             chess.reset();
             chess.load(move.after);
@@ -155,17 +170,11 @@ const Game = () => {
           });
           break;
         case GAME_OVER:
-          console.log("Game is over");
-          const { result, status } = message.payload;
-          setGameResult({ result, status });
+          const { result, status, by } = message.payload;
+          setGameResult({ result, status, by });
           gameOverAudio.play();
-          console.log(gameResult);
-          toast.info(`Game is ${status}`, {
-            description: result + " is the winner",
-          });
           break;
         case JOIN_GAME:
-          console.log("Joining existing game");
           const { moves, blackPlayer, whitePlayer } = message.payload;
           if (gameId !== message.payload.gameId) {
             navigate(`/play/${message.payload.gameId}`);
@@ -184,6 +193,7 @@ const Game = () => {
             setGameResult({
               result: message.payload.result,
               status: message.payload.status,
+              by: message.payload.by,
             });
           }
           gameStartAudio.play();
@@ -217,12 +227,15 @@ const Game = () => {
         <Loader />
       </div>
     );
-
   return (
     <div className="flex justify-center">
       {gameResult &&
         gameResult.status === "COMPLETED" &&
-        gameResult.result !== "DRAW" && <Confetti />}
+        gameResult.result !== "DRAW" &&
+        ((gameResult.result === "BLACK_WINS" &&
+          gameData?.blackPlayer.id === user.id) ||
+          (gameResult.result === "WHITE_WINS" &&
+            gameData?.whitePlayer.id === user.id)) && <Confetti />}
       {gameData && gameResult && (
         <GameEndModal gameData={gameData!} gameResult={gameResult!} />
       )}
@@ -248,20 +261,39 @@ const Game = () => {
               playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
             />
           </div>
-          <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl flex justify-center w-400">
+          <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl w-400">
             {!start ? (
               <div className="mt-4">
-                <Button
-                  onClick={() => {
-                    socket.send(JSON.stringify({ type: INIT_GAME }));
-                  }}
-                  className="font-semibold"
-                >
-                  Play Random
-                </Button>
+                {!room ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Button
+                      onClick={() => {
+                        socket.send(JSON.stringify({ type: INIT_GAME }));
+                      }}
+                      className="font-semibold"
+                    >
+                      Play Random
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        socket.send(JSON.stringify({ type: CREATE_ROOM }));
+                      }}
+                      className="font-semibold"
+                    >
+                      Create Room
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    {room && <RoomDetails roomId={room} socket={socket} />}
+                  </div>
+                )}
               </div>
             ) : (
-              <MovesTable />
+              <div className="flex flex-col gap-5">
+                <MovesTable />
+                <InGameButtons socket={socket} gameId={gameId ?? ""} />
+              </div>
             )}
           </div>
         </div>
