@@ -18,8 +18,9 @@ import {
   GameStatus,
   Result,
   AUTO_ABORT,
+  CREATE_ROOM,
 } from "@repo/utils/messages";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { movesAtomState, selectedMoveIndexAtom } from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
 import GameEndModal from "../components/GameEndModal";
@@ -85,14 +86,15 @@ const Game = () => {
   const [gameData, setGameData] = useState<gameMetaData | null>(null);
   const [gameResult, setGameResult] = useState<gameEndResult | null>(null);
   const [start, setStart] = useState<boolean>(false);
-  const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
+  const setAllMoves = useSetRecoilState(movesAtomState);
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
     selectedMoveIndexAtom
   );
+  const [room, setRoom] = useState<string | null>(null);
   const selectedMoveIndexRef = useRef(selectedMoveIndex);
-  useEffect(()=>{
+  useEffect(() => {
     selectedMoveIndexRef.current = selectedMoveIndex;
-  },[selectedMoveIndex])
+  }, [selectedMoveIndex]);
   useEffect(() => {
     if (!socket) {
       return;
@@ -108,6 +110,12 @@ const Game = () => {
           break;
         case AUTO_ABORT:
           toast.error("Inactivity", {
+            description: message.payload.message,
+          });
+          break;
+        case CREATE_ROOM:
+          setRoom(message.payload.gameId);
+          toast.success("Created", {
             description: message.payload.message,
           });
           break;
@@ -251,14 +259,31 @@ const Game = () => {
           <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl flex justify-center w-400">
             {!start ? (
               <div className="mt-4">
-                <Button
-                  onClick={() => {
-                    socket.send(JSON.stringify({ type: INIT_GAME }));
-                  }}
-                  className="font-semibold"
-                >
-                  Play Random
-                </Button>
+                {!room ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Button
+                      onClick={() => {
+                        socket.send(JSON.stringify({ type: INIT_GAME }));
+                      }}
+                      className="font-semibold"
+                    >
+                      Play Random
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        socket.send(JSON.stringify({ type: CREATE_ROOM }));
+                      }}
+                      className="font-semibold"
+                    >
+                      Create Room
+                    </Button>
+                  </div>
+                ):(
+                  <div>
+                    
+                  </div>
+                )
+                }
               </div>
             ) : (
               <MovesTable />
