@@ -105,7 +105,6 @@ const Game = () => {
     }
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      // console.log(message);
       switch (message.type) {
         case ADDED_GAME:
           toast.success("Game is added to queue", {
@@ -118,7 +117,6 @@ const Game = () => {
           });
           break;
         case CREATE_ROOM:
-          console.log("message from room");
           setRoom(message.payload.gameId);
           toast.success("Created", {
             description: message.payload.message,
@@ -131,7 +129,6 @@ const Game = () => {
           });
           break;
         case GAME_ALERT:
-          console.log(message.payload.message);
           toast.error("Game Alert", {
             description: message.payload.message,
           });
@@ -173,17 +170,11 @@ const Game = () => {
           });
           break;
         case GAME_OVER:
-          console.log("Game is over");
           const { result, status, by } = message.payload;
-          setGameResult({ result, status,by});
+          setGameResult({ result, status, by });
           gameOverAudio.play();
-          console.log(gameResult);
-          toast.info(`Game is ${status}`, {
-            description: result + " is the winner",
-          });
           break;
         case JOIN_GAME:
-          console.log("Joining existing game");
           const { moves, blackPlayer, whitePlayer } = message.payload;
           if (gameId !== message.payload.gameId) {
             navigate(`/play/${message.payload.gameId}`);
@@ -236,7 +227,6 @@ const Game = () => {
         <Loader />
       </div>
     );
-
   return (
     <div className="flex justify-center">
       {gameResult &&
@@ -294,7 +284,9 @@ const Game = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div>{room && <RoomDetails roomId={room} socket={socket} />}</div>
+                  <div>
+                    {room && <RoomDetails roomId={room} socket={socket} />}
+                  </div>
                 )}
               </div>
             ) : (
