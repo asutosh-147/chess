@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Button from "../components/ui/Button";
-import ChessBoard, { isPromoting } from "../components/ChessBoard";
+import ChessBoard from "../components/ChessBoard";
 import { useSocket } from "../hooks/useSocket";
 import { Chess, Move } from "chess.js";
 import { toast } from "sonner";
@@ -22,7 +22,12 @@ import {
   DELETE_ROOM,
 } from "@repo/utils/messages";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { movesAtomState, selectedMoveIndexAtom } from "@repo/store/chessBoard";
+import {
+  abortTimerAtom,
+  movesAtomState,
+  selectedMoveIndexAtom,
+  startAbortTimerAtom,
+} from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
 import GameEndModal from "../components/GameEndModal";
 import Confetti from "@/components/Confetti";
@@ -37,7 +42,6 @@ import {
 } from "@/utils/audio";
 import RoomDetails from "@/components/RoomDetails";
 import InGameButtons from "@/components/InGameButtons";
-
 type gameMetaData = {
   blackPlayer: {
     id: string;
@@ -90,12 +94,38 @@ const Game = () => {
   const [gameData, setGameData] = useState<gameMetaData | null>(null);
   const [gameResult, setGameResult] = useState<gameEndResult | null>(null);
   const [start, setStart] = useState<boolean>(false);
+  const [room, setRoom] = useState<string | null>(null);
   const setAllMoves = useSetRecoilState(movesAtomState);
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
     selectedMoveIndexAtom
   );
-  const [room, setRoom] = useState<string | null>(null);
   const selectedMoveIndexRef = useRef(selectedMoveIndex);
+
+  const [startAbortTimer, setStartAbortTimer] =
+    useRecoilState(startAbortTimerAtom);
+  const setAbortTimer = useSetRecoilState(abortTimerAtom);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (startAbortTimer) {
+      intervalRef.current = setInterval(() => {
+        setAbortTimer((prev) => {
+          if (prev <= 1000) {
+            clearInterval(intervalRef.current!);
+            return 0;
+          }
+          return prev - 1000;
+        });
+      }, 1000);
+    } else {
+      clearInterval(intervalRef.current!);
+      setAbortTimer(30000);
+    }
+    return () => {
+      clearInterval(intervalRef.current!);
+    };
+  }, [startAbortTimer]);
+
   useEffect(() => {
     selectedMoveIndexRef.current = selectedMoveIndex;
   }, [selectedMoveIndex]);
@@ -103,6 +133,7 @@ const Game = () => {
     if (!socket) {
       return;
     }
+
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       switch (message.type) {
@@ -112,6 +143,7 @@ const Game = () => {
           });
           break;
         case AUTO_ABORT:
+          setStartAbortTimer(true);
           toast.error("Inactivity", {
             description: message.payload.message,
           });
@@ -148,6 +180,7 @@ const Game = () => {
           break;
         case MOVE:
           const move = message.payload.move;
+          setStartAbortTimer(false);
           if (selectedMoveIndexRef.current !== null) {
             chess.reset();
             chess.load(move.after);
@@ -171,6 +204,7 @@ const Game = () => {
           break;
         case GAME_OVER:
           const { result, status, by } = message.payload;
+          setStartAbortTimer(false);
           setGameResult({ result, status, by });
           gameOverAudio.play();
           break;
@@ -221,6 +255,8 @@ const Game = () => {
     };
   }, [socket]);
 
+  console.log("page reloaded");
+
   if (!socket)
     return (
       <div>
@@ -230,7 +266,6 @@ const Game = () => {
   return (
     <div className="flex justify-center">
       {gameResult &&
-        gameResult.status === "COMPLETED" &&
         gameResult.result !== "DRAW" &&
         ((gameResult.result === "BLACK_WINS" &&
           gameData?.blackPlayer.id === user.id) ||

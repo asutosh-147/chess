@@ -1,7 +1,11 @@
-import { movesAtomState } from "@repo/store/chessBoard";
-import React from "react";
+import {
+  abortTimerAtom,
+  movesAtomState,
+  startAbortTimerAtom,
+} from "@repo/store/chessBoard";
 import { useRecoilValue } from "recoil";
-import { iconPieceMapping, pieceMapping } from "@/utils/pieceMapping";
+import { pieceMapping } from "@/utils/pieceMapping";
+
 type Props = {
   PlayerData: {
     id: string;
@@ -12,6 +16,8 @@ type Props = {
 };
 const PlayerLabel = ({ PlayerData, playerColor }: Props) => {
   const allMoves = useRecoilValue(movesAtomState);
+  const abortTimer = useRecoilValue(abortTimerAtom);
+  const startAbortTimer = useRecoilValue(startAbortTimerAtom);
   const opponentColor = playerColor === "w" ? "b" : "w";
   const pieceOrder = {
     p: 1,
@@ -22,6 +28,7 @@ const PlayerLabel = ({ PlayerData, playerColor }: Props) => {
     k: 6,
     "": 7,
   };
+
   return (
     <div className="flex gap-3 justify-start items-center my-3">
       <img src={PlayerData.profilePic} className="rounded-full size-8" />
@@ -60,6 +67,12 @@ const PlayerLabel = ({ PlayerData, playerColor }: Props) => {
             })}
         </div>
       </div>
+      {allMoves.at(-1)?.color !== playerColor && startAbortTimer && (
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-semibold">Auto Resign in : </div>
+          <div className="text-xs font-semibold">{abortTimer / 1000}</div>
+        </div>
+      )}
     </div>
   );
 };

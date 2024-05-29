@@ -85,7 +85,7 @@ export class Game {
           "Auto Abort"
         );
       }, 30 * 1000);
-    }, 30 * 100000);
+    }, 45 * 1000);
   }
 
   async addP2ToGame(p2UserId: string) {
