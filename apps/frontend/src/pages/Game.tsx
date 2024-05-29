@@ -254,9 +254,6 @@ const Game = () => {
       setAllMoves([]);
     };
   }, [socket]);
-
-  console.log("page reloaded");
-
   if (!socket)
     return (
       <div>

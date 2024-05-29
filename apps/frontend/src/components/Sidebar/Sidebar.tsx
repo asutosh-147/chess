@@ -53,15 +53,17 @@ const Sidebar = () => {
           </Button>
         )}
         <div className="flex justify-between items-center">
-          <IconButton
+          <div
             onMouseEnter={() => setOpenSettings(true)}
             onMouseLeave={() => setOpenSettings(false)}
             // className="hover:-rotate-45"
             className="relative"
           >
             {openSettings && <Settings />}
-            <IoMdSettings />
-          </IconButton>
+            <IconButton className="hover:-rotate-45">
+              <IoMdSettings />
+            </IconButton>
+          </div>
           <IconButton className="hover:rotate-45">
             <VscColorMode />
           </IconButton>

@@ -12,8 +12,8 @@ const themeMapping = {
     white: "bg-tan-main",
   },
   gray: {
-    black: "bg-gray-700",
-    white: "bg-gray-500",
+    black: "bg-gray-500",
+    white: "bg-gray-300",
   },
 };
 const Settings = () => {
@@ -24,9 +24,10 @@ const Settings = () => {
   ];
   const handleThemeChange = (theme: typeof boardTheme) => {
     setBoardTheme(theme);
+    localStorage.setItem("boardTheme", theme);
   };
   return (
-    <div className="absolute  bg-black bg-opacity-25 p-2 -top-20 -right-56 rounded-lg">
+    <div className="absolute  bg-black bg-opacity-25 p-3 -top-20 -right-56 rounded-lg">
       <div className="flex gap-2 justify-between items-center">
         <div>
           <div className="dropdown dropdown-hover dropdown-top">
@@ -37,7 +38,10 @@ const Settings = () => {
               tabIndex={0}
               className="dropdown-content z-[1] menu p-2 shadow bg-stone-800 rounded-box space-y-2 border-b-[1]"
             >
-              <button className="btn" onClick={() => handleThemeChange("brown")}>
+              <button
+                className="btn"
+                onClick={() => handleThemeChange("brown")}
+              >
                 Brown
               </button>
               <button className="btn" onClick={() => handleThemeChange("neo")}>
@@ -52,11 +56,12 @@ const Settings = () => {
         <div className="flex flex-col">
           {arr.map((row, i) => {
             return (
-              <div className="flex">
+              <div key={i} className="flex">
                 {row.map((_, j) => {
                   const isBlackSquare = (i + j) % 2;
                   return (
                     <div
+                      key={_}
                       className={`size-10 ${isBlackSquare ? themeMapping[boardTheme].black : themeMapping[boardTheme].white}`}
                     ></div>
                   );
@@ -66,7 +71,6 @@ const Settings = () => {
           })}
         </div>
       </div>
-      <div></div>
     </div>
   );
 };
