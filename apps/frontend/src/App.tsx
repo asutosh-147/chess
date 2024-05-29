@@ -3,12 +3,12 @@ import Landing from "./pages/Landing";
 import Game from "./pages/Game";
 import { Toaster } from "sonner";
 import { useUser } from "@repo/store/useUser";
-import { RecoilRoot, useRecoilValue } from "recoil";
+import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
 import Loader from "./components/Loader/Loader";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Login from "./pages/Login";
 import Layout from "./components/layout";
-import { themeAtom } from "@repo/store/theme";
+import { boardThemeAtom, themeAtom } from "@repo/store/theme";
 const App = () => {
   return (
     <div className={`text-white `}>
@@ -22,6 +22,18 @@ const App = () => {
 };
 
 const AuthApp = () => {
+  const [boardTheme, setBoardTheme] = useRecoilState(boardThemeAtom);
+  useEffect(() => {
+    const localBoardTheme = localStorage.getItem(
+      "boardTheme"
+    ) as typeof boardTheme;
+    if (localBoardTheme) {
+      setBoardTheme(localBoardTheme);
+    } else {
+      setBoardTheme("brown");
+      localStorage.setItem("boardTheme", boardTheme);
+    }
+  }, []);
   const user = useUser();
   const theme = useRecoilValue(themeAtom);
 

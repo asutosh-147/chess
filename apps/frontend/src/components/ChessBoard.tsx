@@ -7,11 +7,13 @@ import {
   isBoardFlipped,
   movesAtomState,
   selectedMoveIndexAtom,
+  startAbortTimerAtom,
 } from "@repo/store/chessBoard";
 import { useParams } from "react-router-dom";
 import { MOVE } from "@repo/utils/messages";
 import { playAudio } from "@/pages/Game";
 import PromotionOptions from "./PromotionOptions";
+import { boardThemeAtom } from "@repo/store/theme";
 
 export function isPromoting(chess: Chess, from: Square, to: Square) {
   if (!from) {
@@ -66,6 +68,8 @@ const ChessBoard = ({
   const [promoting, setPromoting] = useState<React.ReactNode | null>(null);
   const isMyTurn = playerColor === chess.turn();
   const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
+  const setStartAbortTimer = useSetRecoilState(startAbortTimerAtom);
+  const [boardTheme, setBoardTheme] = useRecoilState(boardThemeAtom);
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
     selectedMoveIndexAtom
   );
@@ -81,12 +85,9 @@ const ChessBoard = ({
     });
   };
   const handleMakeMove = async (from: Square, squareRep: Square) => {
-    console.log(from, squareRep);
     try {
-      console.log("trying to make move");
       let moveResult: Move;
       if (isPromoting(chess, from, squareRep)) {
-        console.log("promoting");
         const piece = await getSelectedPiece();
         moveResult = chess.move({
           from,
@@ -94,14 +95,12 @@ const ChessBoard = ({
           promotion: piece,
         });
       } else {
-        console.log("not promoting");
         moveResult = chess.move({
           from,
           to: squareRep,
         });
       }
       if (moveResult) {
-        console.log("local move is made");
         socket.send(
           JSON.stringify({
             type: MOVE,
@@ -115,6 +114,7 @@ const ChessBoard = ({
         setAllMoves((prevMoves) => [...prevMoves, moveResult]);
         setLegalMoves([]);
         setBoard(chess.board());
+        setStartAbortTimer(false);
         setFrom(null);
       }
     } catch (e: any) {
@@ -181,8 +181,8 @@ const ChessBoard = ({
                           ? "bg-[#f6eb72]"
                           : "bg-[#dcc34b]"
                         : whiteBox
-                          ? "bg-whiteSquare-brown"
-                          : "bg-blackSquare-brown"
+                          ? themeMapping[boardTheme].white
+                          : themeMapping[boardTheme].black
                   } `}
                   onClick={() => {
                     if (!started) return;
@@ -268,4 +268,18 @@ const ChessBoard = ({
   );
 };
 
+const themeMapping = {
+  brown: {
+    black: "bg-blackSquare-brown",
+    white: "bg-whiteSquare-brown",
+  },
+  neo: {
+    black: "bg-green-main",
+    white: "bg-tan-main",
+  },
+  gray: {
+    black: "bg-gray-500",
+    white: "bg-gray-300",
+  },
+};
 export default ChessBoard;

@@ -6,6 +6,11 @@ const Landing = () => {
   const navigate = useNavigate();
   return (
     <div className="w-full flex justify-center mt-32">
+      <img
+        className="fixed -z-10 top-0 left-52 scale-150 w-full rotate-45 bg-repeat  bg-cover mix-blend-color-burn opacity-10"
+        src="/images/pattern.jpg"
+        alt="boardpatternbg"
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 w-800 gap-5 justify-items-center items-center">
         <div className="self-center">
           <img

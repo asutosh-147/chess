@@ -34,9 +34,16 @@
     background: #555;
 }
 
+
 @layer utilities {
+    .btn{
+        @apply bg-stone-800 text-white
+    }
+    /* .radio {
+        @apply 
+    } */
     .piece {
-        @apply text-4xl;
+        @apply text-4xl outline-none border-none;
     }
 
     .profilePic-game {
