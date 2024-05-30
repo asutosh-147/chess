@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { useUser } from "@repo/store/useUser";
 import { useNavigate, useParams } from "react-router-dom";
 import PlayerLabel from "../components/PlayerLabel";
-
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   ADDED_GAME,
   GAME_ALERT,
@@ -284,14 +285,16 @@ const Game = () => {
         )}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div className="col-span-4">
-            <ChessBoard
-              started={start}
-              chess={chess}
-              setBoard={setBoard}
-              board={board}
-              socket={socket}
-              playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
-            />
+            <DndProvider backend={HTML5Backend}>
+              <ChessBoard
+                started={start}
+                chess={chess}
+                setBoard={setBoard}
+                board={board}
+                socket={socket}
+                playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
+              />
+            </DndProvider>
           </div>
           <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl w-400">
             {!start ? (
