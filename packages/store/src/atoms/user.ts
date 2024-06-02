@@ -1,6 +1,10 @@
-const BACKEND_URL = "http://localhost:3000";
 import { atom, selector } from "recoil";
+
+const BACKEND_URL =
+  "http://ec2-13-234-20-33.ap-south-1.compute.amazonaws.com:3000";
 import { User, Game } from "@prisma/client";
+
+
 export type AuthUser = {
   token: string;
   id: string;
@@ -14,9 +18,9 @@ type newGame = Game & {
   blackPlayer: {
     name: string;
   };
-  _count:{
-    moves:number
-  }
+  _count: {
+    moves: number;
+  };
 };
 type UserProfile = User & {
   games: newGame[];

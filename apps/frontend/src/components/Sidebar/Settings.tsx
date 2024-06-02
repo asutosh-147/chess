@@ -1,5 +1,3 @@
-import React from "react";
-import Dropdown from "./Dropdown";
 import { useRecoilState } from "recoil";
 import { boardThemeAtom } from "@repo/store/theme";
 const themeMapping = {
