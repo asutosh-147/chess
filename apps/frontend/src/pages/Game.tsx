@@ -285,16 +285,14 @@ const Game = () => {
         )}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div className="col-span-4">
-            <DndProvider backend={HTML5Backend}>
-              <ChessBoard
-                started={start}
-                chess={chess}
-                setBoard={setBoard}
-                board={board}
-                socket={socket}
-                playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
-              />
-            </DndProvider>
+            <ChessBoard
+              started={start}
+              chess={chess}
+              setBoard={setBoard}
+              board={board}
+              socket={socket}
+              playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
+            />
           </div>
           <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl w-400">
             {!start ? (

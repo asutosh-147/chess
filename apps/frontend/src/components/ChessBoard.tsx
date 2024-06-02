@@ -235,29 +235,20 @@ const ChessBoard = ({
                   ) : (
                     <></>
                   )}
-                  <DroppableSquare square={squareRep} onDrop={handleMakeMove}>
-                    {square ? (
-                      <DraggablePiece
-                        piece={square.type}
-                        square={square.square}
-                      >
-                        {
-                          <img
-                            className="size-11"
-                            src={
-                              pieceMapping[
-                                (square.type +
-                                  square.color) as keyof typeof pieceMapping
-                              ]
-                            }
-                            alt={square?.type + square?.color}
-                          />
-                        }
-                      </DraggablePiece>
-                    ) : (
-                      <div></div>
-                    )}
-                  </DroppableSquare>
+                  {square ? (
+                    <img
+                      className="size-11"
+                      src={
+                        pieceMapping[
+                          (square.type +
+                            square.color) as keyof typeof pieceMapping
+                        ]
+                      }
+                      alt={square?.type + square?.color}
+                    />
+                  ) : (
+                    <div></div>
+                  )}
                   {from && legalMoves.includes(squareRep) && (
                     <div
                       className={`absolute k opacity-20 rounded-full z-[1] ${square ? "size-14 border-black border-4" : "size-5 bg-black"}`}

@@ -32,6 +32,7 @@ export const initPassport = () => {
             update: {
               name: profile.displayName,
               profilePic:profile.photos[0].value,
+              lastLogin: new Date()
             },
             create: {
               email: profile.emails[0].value,

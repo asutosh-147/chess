@@ -9,6 +9,7 @@ import { Suspense, useEffect } from "react";
 import Login from "./pages/Login";
 import Layout from "./components/layout";
 import { boardThemeAtom, themeAtom } from "@repo/store/theme";
+import Profile from "./pages/Profile";
 const App = () => {
   return (
     <div className={`text-white `}>
@@ -47,6 +48,10 @@ const AuthApp = () => {
           <Route
             path="/play/:roomId"
             element={<Layout children={<Game />} />}
+          />
+          <Route
+            path="/profile/:player"
+            element={<Layout children={<Profile />} />}
           />
         </Routes>
       </BrowserRouter>
