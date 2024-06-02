@@ -14,6 +14,8 @@ import { MOVE } from "@repo/utils/messages";
 import { playAudio } from "@/pages/Game";
 import PromotionOptions from "./PromotionOptions";
 import { boardThemeAtom } from "@repo/store/theme";
+import DraggablePiece from "./DragNDrop/DraggablePiece";
+import DroppableSquare from "./DragNDrop/DroppableSquare";
 
 export function isPromoting(chess: Chess, from: Square, to: Square) {
   if (!from) {
@@ -233,24 +235,19 @@ const ChessBoard = ({
                   ) : (
                     <></>
                   )}
-
                   {square ? (
-                    <div>
-                      {
-                        <img
-                          className="size-10"
-                          src={
-                            pieceMapping[
-                              (square.type +
-                                square.color) as keyof typeof pieceMapping
-                            ]
-                          }
-                          alt={square?.type + square?.color}
-                        />
+                    <img
+                      className="size-11"
+                      src={
+                        pieceMapping[
+                          (square.type +
+                            square.color) as keyof typeof pieceMapping
+                        ]
                       }
-                    </div>
+                      alt={square?.type + square?.color}
+                    />
                   ) : (
-                    ""
+                    <div></div>
                   )}
                   {from && legalMoves.includes(squareRep) && (
                     <div
