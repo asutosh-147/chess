@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { useUser } from "@repo/store/useUser";
 import { useNavigate, useParams } from "react-router-dom";
 import PlayerLabel from "../components/PlayerLabel";
-
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   ADDED_GAME,
   GAME_ALERT,
