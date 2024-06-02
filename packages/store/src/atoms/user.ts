@@ -1,5 +1,5 @@
 import { atom, selector } from "recoil";
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "http://ec2-13-234-20-33.ap-south-1.compute.amazonaws.com:3000";
 
 export type User = {
   token: string;
