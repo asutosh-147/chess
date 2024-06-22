@@ -27,7 +27,7 @@ const Landing = () => {
             onClick={() => {
               navigate("/play/start");
             }}
-            className="font-bold flex justify-center items-center gap-2"
+            className="font-bold flex justify-center items-center gap-2 hover:scale-105"
           >
             <div className=" text-xl md:text-3xl">
               <FaChessPawn />

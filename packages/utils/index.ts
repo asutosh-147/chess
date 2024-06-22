@@ -13,3 +13,5 @@ export const DELETE_ROOM = "delete_room"
 
 export type Result = "WHITE_WINS" | "BLACK_WINS" | "DRAW";
 export type GameStatus = "IN_PROGRESS" | "COMPLETED" | "ABANDONED" | "TIME_UP";
+
+export const INIT_PLAYER_TIME = 10 * 60 * 1000;

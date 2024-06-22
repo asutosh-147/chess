@@ -2,9 +2,11 @@ import type { Config } from "tailwindcss";
 
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode:'selector',
   theme: {
     extend: {
       colors: {
+        'custom-tooltip': '#1f2937',
         "tan-300": "#ebecd0",
         "tan-500": "#858576",
         "tan-main": "#e8e9ce",

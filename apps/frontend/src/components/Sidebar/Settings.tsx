@@ -1,19 +1,5 @@
 import { useRecoilState } from "recoil";
-import { boardThemeAtom } from "@repo/store/theme";
-const themeMapping = {
-  brown: {
-    black: "bg-blackSquare-brown",
-    white: "bg-whiteSquare-brown",
-  },
-  neo: {
-    black: "bg-green-main",
-    white: "bg-tan-main",
-  },
-  gray: {
-    black: "bg-gray-500",
-    white: "bg-gray-300",
-  },
-};
+import { boardThemeAtom, themeMapping } from "@repo/store/theme";
 const Settings = () => {
   const [boardTheme, setBoardTheme] = useRecoilState(boardThemeAtom);
   const arr: number[][] = [
@@ -60,7 +46,10 @@ const Settings = () => {
                   return (
                     <div
                       key={_}
-                      className={`size-10 ${isBlackSquare ? themeMapping[boardTheme].black : themeMapping[boardTheme].white}`}
+                      style={{
+                        backgroundColor: isBlackSquare ? themeMapping[boardTheme].black : themeMapping[boardTheme].white
+                      }}
+                      className={`size-10 transition-colors duration-500`}
                     ></div>
                   );
                 })}
