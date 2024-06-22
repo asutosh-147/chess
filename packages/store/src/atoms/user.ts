@@ -1,9 +1,7 @@
 import { atom, selector } from "recoil";
-
-const BACKEND_URL =
-  "http://ec2-13-234-20-33.ap-south-1.compute.amazonaws.com:3000";
 import { User, Game } from "@prisma/client";
 
+const BACKEND_URL = "http://localhost:3000";
 
 export type AuthUser = {
   token: string;

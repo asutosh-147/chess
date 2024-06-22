@@ -8,7 +8,7 @@ const Button = ({ isLoading,variants, className, children, ...props }: ButtonPro
   return (
     <button
       className={cn(
-        "p-3 bg-brown-main text-black shadow-xl hover:bg-green-500 transition-colors hover:shadow-md rounded-lg text-2xl",
+        "p-3 bg-brown-main text-black shadow-xl hover:bg-green-500 transition-all duration-300 hover:shadow-md rounded-lg text-2xl",
         className
       )}
       {...props}

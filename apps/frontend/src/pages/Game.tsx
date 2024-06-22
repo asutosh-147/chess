@@ -7,8 +7,6 @@ import { toast } from "sonner";
 import { useUser } from "@repo/store/useUser";
 import { useNavigate, useParams } from "react-router-dom";
 import PlayerLabel from "../components/PlayerLabel";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   ADDED_GAME,
   GAME_ALERT,
@@ -21,6 +19,7 @@ import {
   AUTO_ABORT,
   CREATE_ROOM,
   DELETE_ROOM,
+  INIT_PLAYER_TIME,
 } from "@repo/utils/messages";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
@@ -98,7 +97,7 @@ const Game = () => {
   const [room, setRoom] = useState<string | null>(null);
   const setAllMoves = useSetRecoilState(movesAtomState);
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
-    selectedMoveIndexAtom
+    selectedMoveIndexAtom,
   );
   const selectedMoveIndexRef = useRef(selectedMoveIndex);
 
@@ -106,7 +105,34 @@ const Game = () => {
     useRecoilState(startAbortTimerAtom);
   const setAbortTimer = useSetRecoilState(abortTimerAtom);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
+  const [player1Time, setPlayer1Time] = useState(INIT_PLAYER_TIME);
+  const [player2Time, setPlayer2Time] = useState(INIT_PLAYER_TIME);
+  const playerTimerRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (start) {
+      playerTimerRef.current = setInterval(() => {
+        if (!player1Time || !player2Time)
+          clearInterval(playerTimerRef.current!);
+        if (chess.turn() == "w") setPlayer1Time((time) => time - 100);
+        else setPlayer2Time((time) => time - 100);
+      }, 100);
+      return () => {
+        clearInterval(playerTimerRef.current!);
+      };
+    }
+  }, [start]);
+  const getPrettyTimer = (time: number) => {
+    if(!time) return <div></div>
+    if(time<0) time = 0;
+    const min = Math.floor(time / (60 * 1000));
+    const seconds = Math.floor((time % (1000 * 60)) / 1000);
+    return (
+      <div className="flex items-center gap-1 font-semibold text-white">
+        <div>{min} : </div>
+        <div>{seconds < 10 ? "0" + seconds : seconds}</div>
+      </div>
+    );
+  };
   useEffect(() => {
     if (startAbortTimer) {
       intervalRef.current = setInterval(() => {
@@ -175,6 +201,8 @@ const Game = () => {
             blackPlayer: message.payload.blackPlayer,
             whitePlayer: message.payload.whitePlayer,
           });
+          setPlayer1Time(message.payload.player1Time);
+          setPlayer2Time(message.payload.player2Time);
           gameStartAudio.play();
           setStart(true);
           setBoard(chess.board());
@@ -206,6 +234,7 @@ const Game = () => {
         case GAME_OVER:
           const { result, status, by } = message.payload;
           setStartAbortTimer(false);
+          clearInterval(playerTimerRef.current!);
           setGameResult({ result, status, by });
           gameOverAudio.play();
           break;
@@ -221,10 +250,12 @@ const Game = () => {
           message.payload.moves.forEach((move: Move) => {
             chess.move(move);
           });
+          setStart(true);
           if (
             message.payload?.result &&
             message.payload?.status !== "IN_PROGRESS"
           ) {
+            clearInterval(playerTimerRef.current!)
             setGameResult({
               result: message.payload.result,
               status: message.payload.status,
@@ -232,9 +263,10 @@ const Game = () => {
             });
           }
           gameStartAudio.play();
+          setPlayer1Time(message.payload.player1Time);
+          setPlayer2Time(message.payload.player2Time);
           setAllMoves(moves);
           setBoard(chess.board());
-          setStart(true);
           break;
         default:
           console.log("Unknown message type");
@@ -248,7 +280,7 @@ const Game = () => {
           payload: {
             gameId,
           },
-        })
+        }),
       );
     }
     return () => {
@@ -272,18 +304,25 @@ const Game = () => {
       {gameData && gameResult && (
         <GameEndModal gameData={gameData!} gameResult={gameResult!} />
       )}
-      <div className="pt-4 w-full max-w-screen-lg">
+      <div className="w-full max-w-screen-lg pt-4">
         {gameData && (
-          <PlayerLabel
-            PlayerData={
-              user.id === gameData?.blackPlayer.id
-                ? gameData.whitePlayer
-                : gameData.blackPlayer
-            }
-            playerColor={user?.id === gameData?.blackPlayer.id ? "w" : "b"}
-          />
+          <div className="flex items-center justify-between">
+            <PlayerLabel
+              PlayerData={
+                user.id === gameData?.blackPlayer.id
+                  ? gameData.whitePlayer
+                  : gameData.blackPlayer
+              }
+              playerColor={user?.id === gameData?.blackPlayer.id ? "w" : "b"}
+              playerTime={
+                user?.id === gameData?.blackPlayer.id
+                  ? getPrettyTimer(player1Time)
+                  : getPrettyTimer(player2Time)
+              }
+            />
+          </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
           <div className="col-span-4">
             <ChessBoard
               started={start}
@@ -294,7 +333,7 @@ const Game = () => {
               playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
             />
           </div>
-          <div className="col-span-2 bg-stone-700 shadow-xl rounded-xl w-400">
+          <div className="col-span-2 w-400 rounded-xl bg-stone-700 shadow-xl">
             {!start ? (
               <div className="mt-4">
                 {!room ? (
@@ -338,6 +377,11 @@ const Game = () => {
                 : gameData.whitePlayer
             }
             playerColor={user?.id === gameData?.blackPlayer.id ? "b" : "w"}
+            playerTime={
+              user?.id === gameData?.blackPlayer.id
+                ? getPrettyTimer(player2Time)
+                : getPrettyTimer(player1Time)
+            }
           />
         )}
       </div>

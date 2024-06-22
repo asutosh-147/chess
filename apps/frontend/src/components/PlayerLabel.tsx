@@ -5,6 +5,7 @@ import {
 } from "@repo/store/chessBoard";
 import { useRecoilValue } from "recoil";
 import { pieceMapping } from "@/utils/pieceMapping";
+import { ReactNode } from "react";
 
 type Props = {
   PlayerData: {
@@ -13,8 +14,9 @@ type Props = {
     profilePic: string;
   };
   playerColor: string;
+  playerTime: ReactNode;
 };
-const PlayerLabel = ({ PlayerData, playerColor }: Props) => {
+const PlayerLabel = ({ PlayerData, playerColor, playerTime }: Props) => {
   const allMoves = useRecoilValue(movesAtomState);
   const abortTimer = useRecoilValue(abortTimerAtom);
   const startAbortTimer = useRecoilValue(startAbortTimerAtom);
@@ -30,8 +32,8 @@ const PlayerLabel = ({ PlayerData, playerColor }: Props) => {
   };
 
   return (
-    <div className="flex gap-3 justify-start items-center my-3">
-      <img src={PlayerData.profilePic} className="rounded-full size-8" />
+    <div className="my-3 flex items-center justify-start gap-3">
+      <img src={PlayerData.profilePic} className="size-8 rounded-full" />
       <div className="flex flex-col items-start">
         <div className="font-semibold">{PlayerData.name}</div>
         <div className="flex text-xs">
@@ -73,6 +75,9 @@ const PlayerLabel = ({ PlayerData, playerColor }: Props) => {
           <div className="text-xs font-semibold">{abortTimer / 1000}</div>
         </div>
       )}
+      <div className="ml-64 p-1 px-3 bg-black bg-opacity-25 hover:scale-105 transition-all duration-300 rounded-md">
+      {playerTime}
+      </div>
     </div>
   );
 };

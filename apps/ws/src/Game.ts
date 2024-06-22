@@ -1,35 +1,16 @@
-import { WebSocket } from "ws";
-import { Chess, Move, Square } from "chess.js";
-import { AUTO_ABORT, GAME_OVER, INIT_GAME, MOVE } from "@repo/utils/index";
+import { Chess, Move } from "chess.js";
+import {
+  AUTO_ABORT,
+  GAME_OVER,
+  INIT_GAME,
+  INIT_PLAYER_TIME,
+  MOVE,
+} from "@repo/utils/index";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { SocketManager, User } from "./UserSocketManager";
 import { GameStatus, Result } from "@repo/utils/index";
 import { gameManager } from ".";
-export function isPromoting(chess: Chess, from: Square, to: Square) {
-  if (!from) {
-    return false;
-  }
-
-  const piece = chess.get(from);
-
-  if (piece?.type !== "p") {
-    return false;
-  }
-
-  if (piece.color !== chess.turn()) {
-    return false;
-  }
-
-  if (!["1", "8"].some((it) => to.endsWith(it))) {
-    return false;
-  }
-
-  return chess
-    .moves({ square: from, verbose: true })
-    .map((it) => it.to)
-    .includes(to);
-}
 export class Game {
   public gameId: string;
   public player1UserId: string;
@@ -38,8 +19,11 @@ export class Game {
   public status: GameStatus;
   public result: Result | null = null;
   public moveCount: number;
+  public player1Time: number;
+  public player2Time: number;
   private abandonTimer: NodeJS.Timeout | null = null;
   private abandonPopupTimer: NodeJS.Timeout | null = null;
+  private PlayerTimer: NodeJS.Timeout | null = null;
   private startTime: Date;
 
   constructor(
@@ -55,6 +39,8 @@ export class Game {
     this.startTime = startTime ?? new Date();
     this.status = "IN_PROGRESS";
     this.moveCount = 0;
+    this.player1Time = INIT_PLAYER_TIME;
+    this.player2Time = INIT_PLAYER_TIME;
   }
 
   private stopAbandonTimers() {
@@ -62,9 +48,9 @@ export class Game {
       clearTimeout(this.abandonTimer);
       this.abandonTimer = null;
     }
-    if(this.abandonPopupTimer){
+    if (this.abandonPopupTimer) {
       clearTimeout(this.abandonPopupTimer);
-      this.abandonPopupTimer=null
+      this.abandonPopupTimer = null;
     }
   }
   private startAbandonTimer() {
@@ -85,9 +71,28 @@ export class Game {
           "Auto Abort"
         );
       }, 30 * 1000);
-    }, 45 * 1000);
+    }, 30 * 1000);
   }
-
+  private startPlayerTimer() {
+    this.PlayerTimer = setInterval(() => {
+      if (this.board.turn() === "w") {
+        this.player1Time -= 100;
+      } else {
+        this.player2Time -= 100;
+      }
+      if (this.player1Time === 0 || this.player2Time === 0) {
+        this.endGame(
+          "TIME_UP",
+          this.board.turn() == "b" ? "WHITE_WINS" : "BLACK_WINS",
+          "by Timeout"
+        );
+      }
+    }, 100);
+  }
+  private stopPlayerTimers() {
+    if (this.PlayerTimer) clearInterval(this.PlayerTimer);
+    this.PlayerTimer = null;
+  }
   async addP2ToGame(p2UserId: string) {
     this.player2UserId = p2UserId;
 
@@ -112,6 +117,8 @@ export class Game {
         type: INIT_GAME,
         payload: {
           roomId: this.gameId,
+          player1Time: this.player1Time,
+          player2Time: this.player2Time,
           whitePlayer: {
             name: users.find((user) => user.id === this.player1UserId)?.name,
             profilePic: users.find((user) => user.id === this.player1UserId)
@@ -129,6 +136,7 @@ export class Game {
       })
     );
     this.startAbandonTimer();
+    this.startPlayerTimer();
   }
 
   seedAllMoves(
@@ -197,8 +205,7 @@ export class Game {
       console.log("error in making move", error);
       return;
     }
-    this.stopAbandonTimers();
-
+    if (this.abandonPopupTimer || this.abandonTimer) this.stopAbandonTimers();
     //add move to db
     try {
       await this.addMoveToDB(move);
@@ -228,14 +235,14 @@ export class Game {
         : this.board.turn() === "w"
           ? "BLACK_WINS"
           : "WHITE_WINS";
-      const by = result === "DRAW" ? "" : "Checkmate"
-      this.endGame("COMPLETED", result,by);
+      const by = result === "DRAW" ? "" : "Checkmate";
+      this.endGame("COMPLETED", result, by);
       return;
     }
-    this.startAbandonTimer();
+    if (this.moveCount < 2) this.startAbandonTimer();
     console.log("move count:", this.moveCount);
   }
-  async endGame(status: GameStatus, result: Result,by:string) {
+  async endGame(status: GameStatus, result: Result, by: string) {
     const finalGameStatus = await db.game.update({
       where: {
         id: this.gameId,
@@ -243,7 +250,7 @@ export class Game {
       data: {
         status: status,
         result: result,
-        by:by,
+        by: by,
         endAt: new Date(),
       },
       include: {
@@ -261,10 +268,12 @@ export class Game {
         payload: {
           result,
           status,
-          by:by
+          by: by,
         },
       })
     );
+    this.stopPlayerTimers();
+    this.stopAbandonTimers();
     gameManager.removeGame(this.gameId);
   }
   async addMoveToDB(move: Move) {

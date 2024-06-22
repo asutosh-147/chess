@@ -2,16 +2,16 @@ import { atom } from "recoil";
 
 export const themeMapping = {
   brown: {
-    black: "bg-blackSquare-brown",
-    white: "bg-whiteSquare-brown",
+    black: "#b88762",
+    white: "#edd6b0",
   },
   neo: {
-    black: "bg-green-main",
-    white: "bg-tan-main",
+    black: "#739552",
+    white: "#e8e9ce",
   },
   gray: {
-    black: "bg-gray-700",
-    white: "bg-gray-500",
+    black: "#6b7280",
+    white: "#d1d5db",
   },
 };
 

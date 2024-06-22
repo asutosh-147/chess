@@ -12,7 +12,7 @@ import { boardThemeAtom, themeAtom } from "@repo/store/theme";
 import Profile from "./pages/Profile";
 const App = () => {
   return (
-    <div className={`text-white `}>
+    <div className={`text-white`}>
       <RecoilRoot>
         <Suspense fallback={<Loader />}>
           <AuthApp />
@@ -26,7 +26,7 @@ const AuthApp = () => {
   const [boardTheme, setBoardTheme] = useRecoilState(boardThemeAtom);
   useEffect(() => {
     const localBoardTheme = localStorage.getItem(
-      "boardTheme"
+      "boardTheme",
     ) as typeof boardTheme;
     if (localBoardTheme) {
       setBoardTheme(localBoardTheme);

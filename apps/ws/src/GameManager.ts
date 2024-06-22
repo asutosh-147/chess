@@ -33,11 +33,15 @@ export class GameManager {
       return;
     }
     this.users.filter((user) => user.socket !== socket);
-    
+
     //if it has created a room and then exited
-    const game = this.games.find(game => game.player1UserId === user.userId);
-    if(game && game.player2UserId === null && this.pendingGameId != game.gameId){
-        this.removeGame(game.gameId);
+    const game = this.games.find((game) => game.player1UserId === user.userId);
+    if (
+      game &&
+      game.player2UserId === null &&
+      this.pendingGameId != game.gameId
+    ) {
+      this.removeGame(game.gameId);
     }
 
     //if it has pending game
@@ -202,13 +206,20 @@ export class GameManager {
   private async joinGame(gameId: string, user: User) {
     const socket = user.socket;
     let availableGame = this.games.find((game) => game.gameId === gameId);
-    if(availableGame && availableGame.player2UserId && availableGame.player1UserId !== user.userId && availableGame.player2UserId !== user.userId){
-      user.socket.send(JSON.stringify({
-        type:GAME_ALERT,
-        payload:{
-          message:"permission denied"
-        }
-      }))
+    if (
+      availableGame &&
+      availableGame.player2UserId &&
+      availableGame.player1UserId !== user.userId &&
+      availableGame.player2UserId !== user.userId
+    ) {
+      user.socket.send(
+        JSON.stringify({
+          type: GAME_ALERT,
+          payload: {
+            message: "permission denied",
+          },
+        })
+      );
       return;
     }
     SocketManager.getInstance().addUserToMapping(gameId, user);
@@ -286,6 +297,7 @@ export class GameManager {
         gameId
       );
       game.seedAllMoves(gameInDb.moves);
+      // game.startAbandonTimer();
       this.games.push(game);
       availableGame = game;
     }
@@ -301,6 +313,8 @@ export class GameManager {
           by: gameInDb.by,
           blackPlayer: gameInDb.blackPlayer,
           whitePlayer: gameInDb.whitePlayer,
+          player1Time: availableGame?.player1Time,
+          player2Time: availableGame?.player2Time,
         },
       })
     );
