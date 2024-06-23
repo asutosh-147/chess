@@ -22,3 +22,13 @@ export const startAbortTimerAtom = atom<boolean>({
   key: "startAbortTimer",
   default: false,
 });
+
+export const spectatingAtom = atom<boolean>({
+  key:"spectatingAtom",
+  default:false,
+})
+
+export const spectatorsAtom = atom<number>({
+  key:"spectatorsAtom",
+  default:0,
+})

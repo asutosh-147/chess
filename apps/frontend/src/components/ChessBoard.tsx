@@ -7,6 +7,7 @@ import {
   isBoardFlipped,
   movesAtomState,
   selectedMoveIndexAtom,
+  spectatingAtom,
   startAbortTimerAtom,
 } from "@repo/store/chessBoard";
 import { useParams } from "react-router-dom";
@@ -60,6 +61,7 @@ const ChessBoard = memo(
       from: string;
       to: string;
     }>(null);
+    const isSpectating = useRecoilValue(spectatingAtom);
     const [promoting, setPromoting] = useState<React.ReactNode | null>(null);
     const isMyTurn = playerColor === chess.turn();
     const [allMoves, setAllMoves] = useRecoilState(movesAtomState);
@@ -171,7 +173,7 @@ const ChessBoard = memo(
                     className={`relative flex h-16 w-16 items-center justify-center transition-colors duration-300`}
                     style={{
                       backgroundColor: isKingInCheckSquare
-                        ? "bg-[#FF6347]"
+                        ? "#FF6347"
                         : isHighlighted
                           ? whiteBox
                             ? "#f6eb72"
@@ -182,6 +184,7 @@ const ChessBoard = memo(
                     }}
                     onClick={() => {
                       if (!started) return;
+                      if(isSpectating) return;
                       if (selectedMoveIndex !== null) {
                         chess.reset();
                         const move = allMoves[allMoves.length - 1];
