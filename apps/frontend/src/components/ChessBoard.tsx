@@ -7,6 +7,7 @@ import {
   isBoardFlipped,
   movesAtomState,
   selectedMoveIndexAtom,
+  spectatingAtom,
   startAbortTimerAtom,
 } from "@repo/store/chessBoard";
 import { useParams } from "react-router-dom";
@@ -60,6 +61,7 @@ const ChessBoard = memo(
       from: string;
       to: string;
     }>(null);
+    const isSpectating = useRecoilValue(spectatingAtom);
     const [promoting, setPromoting] = useState<React.ReactNode | null>(null);
     const isMyTurn = playerColor === chess.turn();
     const [allMoves, setAllMoves] = useRecoilState(movesAtomState);

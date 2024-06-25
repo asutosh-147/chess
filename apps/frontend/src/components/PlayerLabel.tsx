@@ -21,6 +21,7 @@ const PlayerLabel = ({ PlayerData, playerColor, playerTime }: Props) => {
   const abortTimer = useRecoilValue(abortTimerAtom);
   const startAbortTimer = useRecoilValue(startAbortTimerAtom);
   const opponentColor = playerColor === "w" ? "b" : "w";
+  const showAbandonTimer = allMoves.length === 0 ? playerColor==="w" : allMoves.at(-1)?.color !== playerColor;
   const pieceOrder = {
     p: 1,
     r: 2,
@@ -32,7 +33,7 @@ const PlayerLabel = ({ PlayerData, playerColor, playerTime }: Props) => {
   };
 
   return (
-    <div className="my-3 flex items-center justify-start gap-3">
+    <div className="my-3 flex items-center justify-start gap-3 relative">
       <img src={PlayerData.profilePic} className="size-8 rounded-full" />
       <div className="flex flex-col items-start">
         <div className="font-semibold">{PlayerData.name}</div>
@@ -69,8 +70,8 @@ const PlayerLabel = ({ PlayerData, playerColor, playerTime }: Props) => {
             })}
         </div>
       </div>
-      {allMoves.at(-1)?.color !== playerColor && startAbortTimer && (
-        <div className="flex items-center gap-2">
+      {showAbandonTimer && startAbortTimer && (
+        <div className="flex absolute left-1/2 items-center gap-2">
           <div className="text-xs font-semibold">Auto Resign in : </div>
           <div className="text-xs font-semibold">{abortTimer / 1000}</div>
         </div>

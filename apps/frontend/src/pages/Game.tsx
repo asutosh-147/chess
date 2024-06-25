@@ -26,6 +26,7 @@ import {
   abortTimerAtom,
   movesAtomState,
   selectedMoveIndexAtom,
+  spectatingAtom,
   startAbortTimerAtom,
 } from "@repo/store/chessBoard";
 import MovesTable from "../components/MovesTable";
@@ -87,7 +88,6 @@ const Game = () => {
       navigate("/login");
     }
   }, [user]);
-  // const { token, ...currentPlayerData } = user ?? {};
   const socket = useSocket();
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
@@ -96,6 +96,7 @@ const Game = () => {
   const [start, setStart] = useState<boolean>(false);
   const [room, setRoom] = useState<string | null>(null);
   const setAllMoves = useSetRecoilState(movesAtomState);
+  const setIsSpectating = useSetRecoilState(spectatingAtom);
   const [selectedMoveIndex, setSelectedMoveIndex] = useRecoilState(
     selectedMoveIndexAtom,
   );
@@ -239,7 +240,8 @@ const Game = () => {
           gameOverAudio.play();
           break;
         case JOIN_GAME:
-          const { moves, blackPlayer, whitePlayer } = message.payload;
+          const { moves, blackPlayer, whitePlayer,isSpectating } = message.payload;
+          if(isSpectating) setIsSpectating(isSpectating);
           if (gameId !== message.payload.gameId) {
             navigate(`/play/${message.payload.gameId}`);
           }
@@ -370,6 +372,7 @@ const Game = () => {
           </div>
         </div>
         {gameData && (
+          <div className="flex items-center justify-between">
           <PlayerLabel
             PlayerData={
               user.id === gameData?.blackPlayer.id
@@ -383,6 +386,7 @@ const Game = () => {
                 : getPrettyTimer(player1Time)
             }
           />
+          </div>
         )}
       </div>
     </div>
