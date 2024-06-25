@@ -149,6 +149,10 @@ const ChessBoard = memo(
         setBoard(chess.board());
       }
     }, [selectedMoveIndex]);
+    const handleDragEnd = () => {
+      setFrom(null);
+      setLegalMoves([]);
+    };
     return (
       <div className="text-white">
         {(isFlipped ? [...board].reverse() : board).map((row, i) => {
@@ -167,6 +171,40 @@ const ChessBoard = memo(
                   square?.color === chess.turn() &&
                   chess.inCheck();
                 const whiteBox = (i + j) % 2 === 0;
+                const handleClick = () => {
+                  if (!started) return;
+                  if (selectedMoveIndex !== null) {
+                    chess.reset();
+                    const move = allMoves[allMoves.length - 1];
+                    chess.load(move?.after);
+                    setLastMove({ from: move?.from, to: move?.to });
+                    setBoard(chess.board());
+                    setSelectedMoveIndex(null);
+                  }
+                  if (!isMyTurn) return;
+                  if (!square && from === null) return;
+                  if (!from && square?.color !== chess.turn()) return;
+                  if (from && from === squareRep) {
+                    setFrom(null);
+                    setPromoting(null);
+                    setLegalMoves([]);
+                    return;
+                  }
+                  if (!from) {
+                    if (square) {
+                      if (square.color === playerColor) {
+                        setFrom(squareRep);
+                        setLegalMoves(
+                          chess
+                            .moves({ square: square.square, verbose: true })
+                            .map((move: Move) => move.to),
+                        );
+                      }
+                    }
+                  } else {
+                    handleMakeMove(from, squareRep);
+                  }
+                };
                 return (
                   <div
                     key={j}
@@ -182,40 +220,22 @@ const ChessBoard = memo(
                             ? themeMapping[boardTheme].white
                             : themeMapping[boardTheme].black,
                     }}
-                    onClick={() => {
-                      if (!started) return;
-                      if(isSpectating) return;
-                      if (selectedMoveIndex !== null) {
-                        chess.reset();
-                        const move = allMoves[allMoves.length - 1];
-                        chess.load(move?.after);
-                        setLastMove({ from: move?.from, to: move?.to });
-                        setBoard(chess.board());
-                        setSelectedMoveIndex(null);
-                      }
-                      if (!isMyTurn) return;
-                      if (!square && from === null) return;
-                      if (!from && square?.color !== chess.turn()) return;
-                      if (from && from === squareRep) {
-                        setFrom(null);
-                        setPromoting(null);
-                        setLegalMoves([]);
-                        return;
-                      }
-                      if (!from) {
-                        if (square) {
-                          if (square.color === playerColor) {
-                            setFrom(squareRep);
-                            setLegalMoves(
-                              chess
-                                .moves({ square: square.square, verbose: true })
-                                .map((move: Move) => move.to),
-                            );
-                          }
-                        }
-                      } else {
+                    onClick={handleClick}
+                    onDrop={(e) => {
+                      e.currentTarget.style.border = "none";
+                      if (!legalMoves.includes(squareRep)) return;
+                      e.preventDefault();
+                      if (from) {
                         handleMakeMove(from, squareRep);
                       }
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      e.currentTarget.style.border = "4px solid white";
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.style.border = "none";
                     }}
                   >
                     {(!isFlipped && j == 0) || (isFlipped && j == 7) ? (
@@ -234,7 +254,12 @@ const ChessBoard = memo(
                     )}
                     {square ? (
                       <img
-                        className="size-11"
+                        draggable
+                        onDragStart={() => {
+                          handleClick();
+                        }}
+                        onDragEnd={handleDragEnd}
+                        className="size-12 hover:cursor-grab"
                         src={
                           pieceMapping[
                             (square.type +
@@ -248,7 +273,7 @@ const ChessBoard = memo(
                     )}
                     {from && legalMoves.includes(squareRep) && (
                       <div
-                        className={`k absolute z-[1] rounded-full opacity-20 ${square ? "size-14 border-4 border-black" : "size-5 bg-black"}`}
+                        className={`k absolute z-[1] rounded-full opacity-20 ${square ? "size-16 border-4 border-black" : "size-5 bg-black"}`}
                       ></div>
                     )}
                     {from === squareRep && promoting}
