@@ -233,7 +233,6 @@ const ChessBoard = memo(
                       <></>
                     )}
                     {square ? (
-                      // <DraggablePiece piece={square.type} square={squareRep} >
                       <img
                         className="size-11"
                         src={
@@ -245,7 +244,6 @@ const ChessBoard = memo(
                         alt={square?.type + square?.color}
                       />
                     ) : (
-                      // </DraggablePiece>
                       <div></div>
                     )}
                     {from && legalMoves.includes(squareRep) && (
