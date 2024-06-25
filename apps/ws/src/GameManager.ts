@@ -206,6 +206,22 @@ export class GameManager {
   private async joinGame(gameId: string, user: User) {
     const socket = user.socket;
     let availableGame = this.games.find((game) => game.gameId === gameId);
+    if (
+      availableGame &&
+      availableGame.player2UserId &&
+      availableGame.player1UserId !== user.userId &&
+      availableGame.player2UserId !== user.userId
+    ) {
+      user.socket.send(
+        JSON.stringify({
+          type: GAME_ALERT,
+          payload: {
+            message: "permission denied",
+          },
+        })
+      );
+      return;
+    }
     SocketManager.getInstance().addUserToMapping(gameId, user);
     if (
       availableGame &&
@@ -285,22 +301,7 @@ export class GameManager {
       this.games.push(game);
       availableGame = game;
     }
-    if (
-      availableGame &&
-      availableGame.player2UserId &&
-      availableGame.player1UserId !== user.userId &&
-      availableGame.player2UserId !== user.userId
-    ) {
-      user.socket.send(
-        JSON.stringify({
-          type: JOIN_GAME,
-          payload: {
-            isSpectating:true,
-            message: "Joining as a spectator",
-          },
-        })
-      );
-    }
+
     socket.send(
       JSON.stringify({
         type: JOIN_GAME,
