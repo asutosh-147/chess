@@ -1,7 +1,7 @@
 import { atom, selector } from "recoil";
 import { User, Game } from "@prisma/client";
 
-const BACKEND_URL = "http://ec2-13-127-41-102.ap-south-1.compute.amazonaws.com";
+const BACKEND_URL = "https://chessbackend.codingkoala.ninja";
 
 export type AuthUser = {
   token: string;
