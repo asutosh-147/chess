@@ -20,7 +20,7 @@ const Profile = () => {
     return <div>error in fetching</div>;
   }
   return (
-    <div className="grid grid-cols-8 scrollbar-custom dark:bg-gray-800 transition-colors duration-500">
+    <div className="grid grid-cols-8 scrollbar-custom transition-colors duration-500">
       <div className="col-start-2 col-span-6 p-6 bg-black bg-opacity-20 mt-10 rounded-lg">
         <div className="grid grid-cols-6 gap-6">
           <div className="avatar">
@@ -58,7 +58,7 @@ const Profile = () => {
       </div>
       <div className="col-start-2 col-span-6 p-6 bg-black bg-opacity-20 mt-10 rounded-lg">
         <div className="overflow-x-auto">
-          <table className="table table-zebra">
+          <table className="table table-zebra-zebra">
             <thead>
               <tr className="text-stone-400">
                 <th></th>
